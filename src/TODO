@@ -1,0 +1,54 @@
+TODO: 
+
+
+Things to do: 
+
+Map Editor Save/Load
+- maps should be generated but there should be a hub between maps where the player can change gear / chill out, how/where do we save this?
+- how do we load maps? we're gonna generate maps in the future, what format do we need to generate them in? JSON? CSV? 
+
+Map Editor Sprite Sheet functionality
+- More Map editor functionality, the ability to swap between layers in the tilemap and tile we're gonna place
+- off grid rendering
+
+Static Entities
+- Entities with no animation that are seperate from the tilemap
+- loot on the ground will probably be static entities
+- Trees/Rocks/Foliage will NOT be static entities, they will be rendered during the tilemap rendering pass
+
+Corrran
+
+Animation Refactor
+- Make it work
+Frame Independence on PhysicsEntity movement
+- Make it work so we dont need to frame cap at 144
+
+Braden: 
+
+UI Abstraction (see main.py)
+- How do Menus work at the rendering level
+- wtf is a loading screen
+- How do buttons work
+- How can we store the players desired settings on device and load them at runtime
+- A future refeactor will require a more thourough handling of user input during the event loop
+
+
+
+IDEAS:
+
+map generation
+
+
+combat mechanics
+- spinning is broken into 3 parts: 
+  - spin startup
+  - spin speed (RPS)
+  - spin cooldown
+
+
+
+loot 
+  - items take NLP generated names from wowItems bigram/MLP project
+  - can probably run LSTM on device for cooler names and becuase its funny
+
+
