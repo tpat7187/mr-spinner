@@ -27,7 +27,7 @@ class Animation:
     self.y_offset = (self.frame_height - self.hitbox_height) // 2
   
   def update(self): 
-    self.game_frame = (self.game_frame + 1) % (self.animation_frame_duration * self.ed)
+    self.game_frame = (self.game_frame + 1) % (self.animation_frame_duration * self.ed) 
   
   def get_img(self): 
     current_frame = self.game_frame // self.animation_frame_duration
