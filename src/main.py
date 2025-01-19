@@ -38,7 +38,9 @@ class Game:
   def init_entities(self) -> None:
     # Initialize player and boxes
     self.player = Player((0, 0), (50, 50))
+    box = PhysicsEntity((50, 50), (30, 30), 'box')
     self.layers['entities'].add(self.player)
+    self.layers['entities'].add(box)
 
   def handle_events(self) -> None:
     for event in pygame.event.get():
@@ -51,7 +53,7 @@ class Game:
     self.handle_collisions()
 
     # TODO: put this somewhere
-    if pygame.key.get_pressed()[pygame.K_a]: self.current_map.place_tile_at_mouse_position(self.camera.scroll)
+    if pygame.key.get_pressed()[pygame.K_t]: self.current_map.place_tile_at_mouse_position(self.camera.scroll)
 
   # TODO: this sucks
   def handle_collisions(self) -> None:
