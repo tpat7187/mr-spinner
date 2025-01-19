@@ -4,7 +4,9 @@ import pygame
 import sys
 from entities import PhysicsEntity, Player
 from tiles import TileMap
-from utils import Camera
+from utils import Camera, BASE_PIXEL_SCALE
+
+
 
 class Game:
   def __init__(self): 
@@ -22,11 +24,9 @@ class Game:
 
     self.mouse_position = None
 
-    self.current_map = TileMap()
+    self.current_map = TileMap(tile_size=32)
 
-
-
-  # TODO: refactor, sprite groups are kinda cringe we could just use lists OMEGALUL
+  # what are the benifits of using pygame sprite groups over arrays for storage?
   def init_entity_groups(self) -> None:
     # Define entitiy rendering layers
     self.layers: Dict[str, pygame.sprite.Group] = {
@@ -37,8 +37,10 @@ class Game:
   # TODO: refactor
   def init_entities(self) -> None:
     # Initialize player and boxes
-    self.player = Player((0, 0), (50, 50))
+    self.player = Player((0, 0), (32, 32))
+    box = PhysicsEntity((50, 50), (30, 30), 'box')
     self.layers['entities'].add(self.player)
+    self.layers['entities'].add(box)
 
   def handle_events(self) -> None:
     for event in pygame.event.get():
@@ -51,7 +53,7 @@ class Game:
     self.handle_collisions()
 
     # TODO: put this somewhere
-    if pygame.key.get_pressed()[pygame.K_a]: self.current_map.place_tile_at_mouse_position(self.camera.scroll)
+    if pygame.key.get_pressed()[pygame.K_t]: self.current_map.place_tile_at_mouse_position(self.camera.scroll)
 
   # TODO: this sucks
   def handle_collisions(self) -> None:
@@ -99,15 +101,10 @@ class Game:
     self.current_map.render([self.camera.scroll.x, self.camera.scroll.y], self.camera.width, self.camera.height)
     
     # Render Entities
-    # TODO: Can we abtract away the rendering to the PhysicsEntity Object, so we'd just call render for every sprite in the layer
     for layer in self.layer_order:
       if self.layers[layer]:
         for sprite in self.layers[layer]:
-          screen_pos = (
-            sprite.rect.x - self.camera.scroll.x,
-            sprite.rect.y - self.camera.scroll.y
-          )
-          self.screen.blit(sprite.image, screen_pos)
+          sprite.render(self.camera.scroll)
     
 
     # Render UI 
@@ -115,7 +112,7 @@ class Game:
     fps_t = self.clock.get_fps()
     pygame.font.init()
     my_font = pygame.font.SysFont('Times New Roman', 13)
-    text_surface = my_font.render(f"FPS: <{int(fps_t)}> Mouse Tile Positiion: <{self.current_map.mouse_position_to_tile(self.camera.scroll)}>", False, (255, 255, 255))
+    text_surface = my_font.render(f"FPS: <{int(fps_t)}>\nMouse Tile Positiion: <{self.current_map.mouse_position_to_tile(self.camera.scroll)}>\nState: {self.player.state}\nDirection: {self.player.direction}", False, (255, 255, 255))
 
     fps_counter_position = ( 
       self.player.rect.x - self.camera.scroll.x + 400, 
