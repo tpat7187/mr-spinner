@@ -2,10 +2,15 @@ from __future__ import annotations
 from typing import Dict, List
 import pygame
 import sys
+import time
+
+
+
 from entities import PhysicsEntity, Player
 from tiles import TileMap
 from utils import Camera, MAP_TO_JSON
 from enum import Enum, auto
+
 
 class GameState(Enum): PLAYING = auto(); PAUSED = auto(); MAP_EDITOR = auto(); INIT = auto();
 
@@ -25,10 +30,8 @@ class Game:
     pygame.display.set_caption("Mr_Spinner")
     self.width, self.height = 1280, 720
     self.screen = pygame.display.set_mode((self.width, self.height))
-    self.clock = pygame.time.Clock()
     self.running = True
     self.state = GameState.PLAYING
-    self.FPS = 144 # TODO: FRAME RATE INDEPENDENCE, VERY IMPORTANT
     
     self.camera = Camera(self.width, self.height)
     self.init_entity_groups()
@@ -50,8 +53,6 @@ class Game:
   def set_state(self, new_state:GameState) -> str:
     if self.state != new_state:
       self.state = new_state
-    
-    
     
   
   # TODO: refactor
@@ -78,9 +79,9 @@ class Game:
           elif self.state == GameState.PLAYING: self.set_state(GameState.PAUSED)
       
       
-  def update(self) -> None:
+  def update(self, dt:float) -> None:
     if self.state == GameState.PLAYING:
-      self.layers['entities'].update()
+      self.layers['entities'].update(dt)
       self.camera.center_camera_on_target(self.player)
       self.handle_collisions()
     
@@ -141,7 +142,7 @@ class Game:
 
     # Render UI 
     # TODO: abstract this away to a UIElement Class which has its own rendering Protocol
-    fps_t = self.clock.get_fps()
+    fps_t = self.dt ** -1 if self.dt != 0 else 0
     pygame.font.init()
     my_font = pygame.font.SysFont('Times New Roman', 13)
     text_surface = my_font.render(f"FPS: <{int(fps_t)}>\nMouse Tile Positiion: <{self.current_map.mouse_position_to_tile(self.camera.scroll)}>\nState: {self.player.state}\nDirection: {self.player.direction}\nGame State: {self.state}", False, (255, 255, 255))
@@ -157,11 +158,14 @@ class Game:
     pygame.display.update()
 
   def run(self) -> None:
+    previous_time = time.time()
     while self.running:
+      self.dt = (time.time() - previous_time)
+      previous_time = time.time()
+
       self.handle_events()
-      self.update()
+      self.update(self.dt)
       self.render()
-      self.clock.tick(self.FPS)
     
     pygame.quit()
     sys.exit()

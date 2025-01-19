@@ -21,7 +21,7 @@ class PhysicsEntity(pygame.sprite.Sprite):
     self.pos = pygame.math.Vector2(pos)
 
     # hb data
-    self.rect = self.image.get_rect(topleft=pos)
+    self.rect = self.image.get_frect(topleft=pos)
 
     self.e_type = e_type
 
@@ -42,12 +42,13 @@ class PhysicsEntity(pygame.sprite.Sprite):
     self.display_surface.blit(self.image, screen_pos)
     
 
-
 class Player(PhysicsEntity): 
   def __init__(self, pos: Tuple[int, int], size: Tuple[int, int]):
     super().__init__(pos, size, 'player') 
-    self.speed = 2
+    self.speed = 200
     self.state = None
+    self.direction = pygame.Vector2()
+    self.idle_direction = pygame.Vector2(0, 1)
 
     # spin stats
     self.spin_frame_count = 0
@@ -75,55 +76,65 @@ class Player(PhysicsEntity):
   def set_state(self, new_state:str) -> str:
     if self.state != new_state:
       self.state = new_state
-      # if the state changes the animation on the next frame needs to be reset
       self.animations[self.state].game_frame = 0
+  
+  def get_input_direction(self) -> pygame.Vector2:
+    direction = pygame.Vector2(0, 0)
+    keys = pygame.key.get_pressed()
     
-  def update(self):
+    if keys[pygame.K_d]: direction.x += 1
+    if keys[pygame.K_a]: direction.x -= 1
+    if keys[pygame.K_w]: direction.y -= 1
+    if keys[pygame.K_s]: direction.y += 1
+    
+    if direction.magnitude() > 0:
+      return direction.normalize()
+    return direction
 
-    self.movement = [False, False]
+  # closest cardinal direction
+  def get_animation_direction(self, direction: pygame.Vector2) -> tuple:
+    if abs(direction.x) > abs(direction.y):
+      return (1, 0) if direction.x > 0 else (-1, 0)
+    else:
+      return (0, 1) if direction.y > 0 else (0, -1)
+
+  def update(self, dt:float):
     self.animations[self.state].update()
     self.image, self.anim_offset = self.animations[self.state].get_img()
 
-    # store old position, probably doesnt work
-    self.pos.x = self.x
-    self.pos.y = self.y
+    # store old position
+    self.pos.x = self.rect.x
+    self.pos.y = self.rect.y
 
-    # states, should we abstract this or who cares
-    # user controls should be in some dictionary or JSON dump somewhere
-    # TODO: handle movement with a vec of bools
-    moving = False
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_d]: 
-      self.movement[0] = True
-      self.rect.x += self.speed
-      self.set_state('run_right')
-      self.direction = (1, 0)
-    if keys[pygame.K_a]: 
-      self.movement[0] = True
-      self.rect.x -= self.speed
-      self.set_state('run_left')
-      self.direction = (-1, 0)
-    if keys[pygame.K_w]: 
-      self.movement[1] = True
-      self.rect.y -= self.speed
-      self.set_state('run_up')
-      self.direction = (0, -1)
-    if keys[pygame.K_s]: 
-      self.movement[1] = True
-      self.rect.y += self.speed
-      self.set_state('run_down')
-      self.direction = (0, 1)
+    # get input and update position
+    self.direction = self.get_input_direction()
+    is_moving = self.direction.magnitude() > 0
     
-    if any(self.movement): moving = True 
-    
-    if moving == False: 
+    if is_moving:
+      self.rect.x += self.direction.x * self.speed * dt
+      self.rect.y += self.direction.y * self.speed * dt
+      
+      # get the closest cardinal direction for animation
+      anim_direction = self.get_animation_direction(self.direction)
+      
+      direction_to_anim = { 
+        (-1, 0) : 'run_left',
+        (1, 0) : 'run_right',
+        (0, 1) : 'run_down',
+        (0, -1) : 'run_up',
+      }
+      self.set_state(direction_to_anim[anim_direction])
+      self.idle_direction = pygame.Vector2(anim_direction)
+
+    else:
       direction_to_anim = { 
         (-1, 0) : 'idle_left',
         (1, 0) : 'idle_right',
         (0, 1) : 'idle_down',
         (0, -1) : 'idle_up',
       }
-      self.set_state(direction_to_anim[tuple(self.direction)])
+      idle_direction_tuple = (int(self.idle_direction.x), int(self.idle_direction.y))
+      self.set_state(direction_to_anim[idle_direction_tuple])
   
   def render(self, camera_scroll): 
     screen_pos = (
@@ -131,7 +142,5 @@ class Player(PhysicsEntity):
       self.rect.y - camera_scroll.y - self.anim_offset[1]
     )
     self.display_surface.blit(self.image, screen_pos)
-    
-  
     
     
