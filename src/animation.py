@@ -3,7 +3,7 @@ import pygame
 from utils import load_image, BASE_PIXEL_SCALE
 
 class Animation:
-  def __init__(self, sprite_sheet_path, rows, columns, hit_box_size=(32, 32), loop=False, st=0, ed=None): 
+  def __init__(self, sprite_sheet_path, rows, columns, frame_duration = 5, hit_box_size=(32, 32), loop=False, st=0, ed=None): 
     self.sprite_sheet_path = sprite_sheet_path
     self.sheet_rows = rows 
     self.sheet_columns = columns
@@ -15,7 +15,7 @@ class Animation:
 
     self.sheet = load_image(self.sprite_sheet_path, BASE_PIXEL_SCALE)
 
-    self.animation_frame_duration = 5
+    self.animation_frame_duration = frame_duration
     self.game_frame = st * self.animation_frame_duration
     
     # frame dim
