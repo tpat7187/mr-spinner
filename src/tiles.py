@@ -1,4 +1,5 @@
 import pygame
+import json
 
 from typing import Dict, List, Tuple
 from utils import load_image, BASE_PIXEL_SCALE
@@ -9,18 +10,13 @@ from utils import load_image, BASE_PIXEL_SCALE
 # TODO: offtile rendering
 class TileMap: 
   def __init__(self, tile_size=32): 
-    self.maps = {
-      'background': {}  
-    }
+
+    self.maps = self.load_map()
     self.tile_size = tile_size * BASE_PIXEL_SCALE
     self.display_surface = pygame.display.get_surface()
     
     self.load_assets()
     
-    self.maps['background'] = { 
-      (0,0): 1, 
-    }
-  
   def load_assets(self): 
     self.tileIDtoTile = { 
       1: load_image('tilemaptest.png'),
@@ -59,6 +55,31 @@ class TileMap:
     tile_position = self.mouse_position_to_tile(camera_scroll)
     self.maps['background'][tile_position] = 1 
   
+  def save_current_map(self): 
+    dict_to_save = {}
+    
+    for map_name, map_data in self.maps.items():
+      dict_to_save[map_name] = {
+        str(key): value 
+        for key, value in map_data.items()
+      }
+    
+    with open('map_data.json', 'w') as f:
+      json.dump(dict_to_save, f, indent=2)
+  
+  def load_map(self): 
+    with open('map_data.json', 'r') as f:
+      json_data = json.load(f)
+      
+    maps_dict = {}
+    for map_name, map_data in json_data.items():
+      maps_dict[map_name] = {
+        eval(key): value 
+        for key, value in map_data.items()
+      }
+      
+    return maps_dict
+    
 
 
 
