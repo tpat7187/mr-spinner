@@ -1,18 +1,18 @@
 import pygame
 
 from typing import Dict, List, Tuple
-from utils import load_image
+from utils import load_image, BASE_PIXEL_SCALE
 
 
 
 # all maps inside tilemaps need to be of the same size
+# TODO: offtile rendering
 class TileMap: 
-  def __init__(self, tile_size=32, tilemap_size=(100, 100)): 
+  def __init__(self, tile_size=32): 
     self.maps = {
       'background': {}  
     }
-    self.tile_size = tile_size
-    self.tilemap_size = tilemap_size
+    self.tile_size = tile_size * BASE_PIXEL_SCALE
     self.display_surface = pygame.display.get_surface()
     
     self.load_assets()
@@ -30,9 +30,9 @@ class TileMap:
     
     # Calculate visible tile range
     start_x = int(camera_scroll[0] // self.tile_size)
-    end_x = min(self.tilemap_size[0], int((camera_scroll[0] + camera_width) // self.tile_size) + 1)
+    end_x = int((camera_scroll[0] + camera_width) // self.tile_size) + 1
     start_y = int(camera_scroll[1] // self.tile_size)
-    end_y = min(self.tilemap_size[1], int((camera_scroll[1] + camera_height) // self.tile_size) + 1)
+    end_y = int((camera_scroll[1] + camera_height) // self.tile_size) + 1
 
     coordinates_to_render = [(x,y) for x in range(start_x, end_x) for y in range(start_y, end_y)]
 
