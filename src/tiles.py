@@ -1,17 +1,20 @@
 import pygame
 import json
 
-from typing import Dict, List, Tuple
-from utils import load_image, BASE_PIXEL_SCALE
+from typing import Dict, List, Tuple, Optional
+from utils import load_image, BASE_PIXEL_SCALE, MAP_TO_JSON
 
 
 
 # all maps inside tilemaps need to be of the same size
 # TODO: offtile rendering
 class TileMap: 
-  def __init__(self, tile_size=32): 
+  def __init__(self, tile_size=32, map_name:Optional[str]=None): 
 
-    self.maps = self.load_map()
+    if map_name: 
+      self.maps = self.load_map(MAP_TO_JSON[map_name])
+
+    #self.maps = self.load_map()
     self.tile_size = tile_size * BASE_PIXEL_SCALE
     self.display_surface = pygame.display.get_surface()
     
@@ -67,8 +70,8 @@ class TileMap:
     with open('map_data.json', 'w') as f:
       json.dump(dict_to_save, f, indent=2)
   
-  def load_map(self): 
-    with open('map_data.json', 'r') as f:
+  def load_map(self, map_path): 
+    with open(map_path, 'r') as f:
       json_data = json.load(f)
       
     maps_dict = {}

@@ -5,6 +5,10 @@ import os
 BASE_PATH = '../assets/'
 BASE_PIXEL_SCALE = 2
 
+MAP_TO_JSON = { 
+  'dev' : BASE_PATH + 'maps/map_data.json'
+}
+
 class Camera: 
   def __init__(self, width, height): 
     self.width, self.height = width, height

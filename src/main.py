@@ -4,7 +4,7 @@ import pygame
 import sys
 from entities import PhysicsEntity, Player
 from tiles import TileMap
-from utils import Camera, BASE_PIXEL_SCALE
+from utils import Camera, MAP_TO_JSON
 
 
 
@@ -24,7 +24,7 @@ class Game:
 
     self.mouse_position = None
 
-    self.current_map = TileMap(tile_size=32)
+    self.current_map = TileMap(tile_size=32, map_name='dev')
 
   # what are the benifits of using pygame sprite groups over arrays for storage?
   def init_entity_groups(self) -> None:
