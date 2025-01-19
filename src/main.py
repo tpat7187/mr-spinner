@@ -5,8 +5,19 @@ import sys
 from entities import PhysicsEntity, Player
 from tiles import TileMap
 from utils import Camera, MAP_TO_JSON
+from enum import Enum, auto
 
+class GameState(Enum): PLAYING = auto(); PAUSED = auto(); MAP_EDITOR = auto(); INIT = auto();
 
+'''
+game states 
+
+map_editor -> allow user to save/load maps and place tiles
+playing -> play the game
+paused -> no update entities call
+init -> Game startup
+
+'''
 
 class Game:
   def __init__(self): 
@@ -16,11 +27,13 @@ class Game:
     self.screen = pygame.display.set_mode((self.width, self.height))
     self.clock = pygame.time.Clock()
     self.running = True
+    self.state = GameState.PLAYING
     self.FPS = 144 # TODO: FRAME RATE INDEPENDENCE, VERY IMPORTANT
     
     self.camera = Camera(self.width, self.height)
     self.init_entity_groups()
     self.init_entities()
+
 
     self.mouse_position = None
 
@@ -33,6 +46,13 @@ class Game:
       'entities': pygame.sprite.Group(),
     }
     self.layer_order: List[str] = list(self.layers.keys())
+  
+  def set_state(self, new_state:GameState) -> str:
+    if self.state != new_state:
+      self.state = new_state
+    
+    
+    
   
   # TODO: refactor
   def init_entities(self) -> None:
@@ -47,13 +67,25 @@ class Game:
       if event.type == pygame.QUIT:
         self.running = False
       
+      
+      # swap between game states
+      if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_t:
+          if self.state == GameState.MAP_EDITOR :self.set_state(GameState.PLAYING)
+          elif self.state == GameState.PLAYING: self.set_state(GameState.MAP_EDITOR)
+        elif event.key == pygame.K_ESCAPE:
+          if self.state == GameState.PAUSED: self.set_state(GameState.PLAYING)
+          elif self.state == GameState.PLAYING: self.set_state(GameState.PAUSED)
+      
+      
   def update(self) -> None:
-    self.layers['entities'].update()
-    self.camera.center_camera_on_target(self.player)
-    self.handle_collisions()
-
-    # TODO: put this somewhere
-    if pygame.key.get_pressed()[pygame.K_t]: self.current_map.place_tile_at_mouse_position(self.camera.scroll)
+    if self.state == GameState.PLAYING:
+      self.layers['entities'].update()
+      self.camera.center_camera_on_target(self.player)
+      self.handle_collisions()
+    
+    if self.state == GameState.MAP_EDITOR:
+      if pygame.key.get_pressed()[pygame.K_g]: self.current_map.place_tile_at_mouse_position(self.camera.scroll)
 
   # TODO: this sucks
   def handle_collisions(self) -> None:
@@ -112,7 +144,7 @@ class Game:
     fps_t = self.clock.get_fps()
     pygame.font.init()
     my_font = pygame.font.SysFont('Times New Roman', 13)
-    text_surface = my_font.render(f"FPS: <{int(fps_t)}>\nMouse Tile Positiion: <{self.current_map.mouse_position_to_tile(self.camera.scroll)}>\nState: {self.player.state}\nDirection: {self.player.direction}", False, (255, 255, 255))
+    text_surface = my_font.render(f"FPS: <{int(fps_t)}>\nMouse Tile Positiion: <{self.current_map.mouse_position_to_tile(self.camera.scroll)}>\nState: {self.player.state}\nDirection: {self.player.direction}\nGame State: {self.state}", False, (255, 255, 255))
 
     fps_counter_position = ( 
       self.player.rect.x - self.camera.scroll.x + 400, 

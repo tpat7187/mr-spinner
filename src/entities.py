@@ -57,7 +57,7 @@ class Player(PhysicsEntity):
 
     # load assets [state, animation]
     self.animations = { 
-      'spinning' : Animation("../assets/player/Sword_1_Template_Idle_Down-Sheet.png", 1, 6),
+      'idle_down' : Animation("../assets/player/Sword_1_Template_Idle_Down-Sheet.png", 1, 6),
       'idle_left' : Animation("../assets/player/Sword_1_Template_Idle_Left-Sheet.png", 1, 6),
       'idle_right' : Animation("../assets/player/Sword_1_Template_Idle_Right-Sheet.png", 1, 6),
       'idle_up' : Animation("../assets/player/Sword_1_Template_Idle_Up-Sheet.png", 1, 6),
@@ -66,7 +66,7 @@ class Player(PhysicsEntity):
       'run_up' : Animation("../assets/player/Sword_2_Template_Run_Up-Sheet.png", 1, 6),
       'run_down' : Animation("../assets/player/Sword_2_Template_Run_Down-Sheet.png", 1, 6),
       'spin_startup' : Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=0, ed=7),
-      'idle_down' : Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=8, ed=20),
+      'spinning' : Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=8, ed=20),
       'spin_cooldown' : Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=20, ed=24),
     }
 

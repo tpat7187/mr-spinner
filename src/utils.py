@@ -1,5 +1,6 @@
 import pygame
-import os
+from enum import Enum, auto
+
 
 
 BASE_PATH = '../assets/'
@@ -8,6 +9,19 @@ BASE_PIXEL_SCALE = 2
 MAP_TO_JSON = { 
   'dev' : BASE_PATH + 'maps/map_data.json'
 }
+
+class GameState(Enum): PLAYING = auto(); PAUSED = auto(); MAP_EDITOR = auto();
+
+'''
+game states 
+
+map_editor -> allow user to save/load maps and place tiles
+playing -> play the game
+paused -> no update entities call
+
+'''
+
+
 
 class Camera: 
   def __init__(self, width, height): 

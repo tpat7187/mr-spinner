@@ -3,26 +3,24 @@ TODO:
 
 Things to do: 
 
-Map Editor Save/Load
-- maps should be generated but there should be a hub between maps where the player can change gear / chill out, how/where do we save this?
-- how do we load maps? we're gonna generate maps in the future, what format do we need to generate them in? JSON? CSV? 
-
 Map Editor Sprite Sheet functionality
 - More Map editor functionality, the ability to swap between layers in the tilemap and tile we're gonna place
 - off grid rendering
 
 Static Entities
-- Entities with no animation that are seperate from the tilemap
-- loot on the ground will probably be static entities
-- Trees/Rocks/Foliage will NOT be static entities, they will be rendered during the tilemap rendering pass
+- Test Animations, like trees shaking n shit
 
-Corrran
+__Corrran:__
 
-Tilemap Save/Load Maps
+spinning / refactor player controller
+
+offtile asset rendering on tilemaps
+
+
 Frame Independence on PhysicsEntity movement
 - Make it work so we dont need to frame cap at 144
 
-Braden: 
+__Braden:__
 
 UI Abstraction (see main.py)
 - How do Menus work at the rendering level
