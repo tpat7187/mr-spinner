@@ -3,7 +3,7 @@ import pygame
 from utils import load_image, BASE_PIXEL_SCALE
 
 class Animation:
-  def __init__(self, sprite_sheet_path, rows, columns, frame_duration = 5, hit_box_size=(32, 32), loop=False, st=0, ed=None): 
+  def __init__(self, sprite_sheet_path, rows, columns, frame_duration = 5, hit_box_size=(32, 32), loop=False, st=1, ed=None): 
     self.sprite_sheet_path = sprite_sheet_path
     self.sheet_rows = rows 
     self.sheet_columns = columns
@@ -26,10 +26,13 @@ class Animation:
     self.x_offset = (self.frame_width - self.hitbox_width) // 2
     self.y_offset = (self.frame_height - self.hitbox_height) // 2
   
-  def update(self): 
-    self.game_frame = (self.game_frame + 1) % (self.animation_frame_duration * self.ed) 
+  # TODO: handle non looping
+  def update(self):
+    relative_frame = ((self.game_frame - (self.st * self.animation_frame_duration) + 1) % (self.animation_frame_duration * (self.ed - self.st)))
+    self.game_frame = relative_frame + (self.st * self.animation_frame_duration)
   
-  def reset(self): self.game_frame = 0
+  def reset(self): 
+    self.game_frame = self.st * self.animation_frame_duration
   
   def get_img(self): 
     current_frame = self.game_frame // self.animation_frame_duration

@@ -12,13 +12,11 @@ Static Entities
 
 __Corrran:__
 
-spinning / refactor player controller
+spinning
 
 offtile asset rendering on tilemaps
 
-
-Frame Independence on PhysicsEntity movement
-- Make it work so we dont need to frame cap at 144
+animation framerate independence
 
 __Braden:__
 

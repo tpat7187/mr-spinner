@@ -17,10 +17,11 @@ class Player(PhysicsEntity):
     self.idle_direction = self.direction
 
     # spin stats
+    self.spinning = False
     self.spin_frame_count = 0
-    self.spin_startup_frames = 10
-    self.spin_frames = 30
-    self.spin_cooldown_frames = 15
+    self.spin_startup_frames = 150
+    self.spin_frames = 300
+    self.spin_cooldown_frames = 100
 
     # load assets [state, animation]
     self.assets = {
@@ -36,9 +37,9 @@ class Player(PhysicsEntity):
         (1, 0): Animation("../assets/player/Sword_2_Template_Run_Right-Sheet.png", 1, 6, frame_duration=15),
         (0, -1): Animation("../assets/player/Sword_2_Template_Run_Up-Sheet.png", 1, 6, frame_duration=15),
       },
-      PlayerState.SPIN_STARTUP: Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=0, ed=7, frame_duration=self.spin_startup_frames),
-      PlayerState.SPINNING: Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=8, ed=20, frame_duration=self.spin_frames),
-      PlayerState.SPIN_COOLDOWN: Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=20, ed=24, frame_duration=self.spin_cooldown_frames),
+      PlayerState.SPIN_STARTUP: Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=1, ed=7, frame_duration=5),
+      PlayerState.SPINNING: Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=8, ed=17, frame_duration=5),
+      PlayerState.SPIN_COOLDOWN: Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=18, ed=24, frame_duration=5),
     }
 
   def get_input_direction(self) -> pygame.Vector2:
@@ -55,14 +56,19 @@ class Player(PhysicsEntity):
     return direction
   
   def spin_handler(self): 
-    if self.spin_frame_count == 0: 
+    self.spinning = True
+    if self.spin_frame_count < self.spin_startup_frames: 
       self.set_state(PlayerState.SPIN_STARTUP)
-    elif self.spin_frame_count <= self.spin_startup_frames: 
+    elif self.spin_startup_frames <= self.spin_frame_count < self.spin_startup_frames + self.spin_frames:
       self.set_state(PlayerState.SPINNING)
-    elif self.spin_startup_frames < self.spin_frame_count <= self.spin_cooldown_frames: 
+    elif self.spin_startup_frames + self.spin_frames <= self.spin_frame_count < self.spin_startup_frames + self.spin_frames + self.spin_cooldown_frames:
       self.set_state(PlayerState.SPIN_COOLDOWN)
-    
+    else:
+      self.spin_frame_count = 0
+      self.spinning = False
+
     self.spin_frame_count += 1
+
 
   def get_animation_direction(self, direction: pygame.Vector2) -> tuple:
     if abs(direction.x) > abs(direction.y): return (1, 0) if direction.x > 0 else (-1, 0)
@@ -72,18 +78,27 @@ class Player(PhysicsEntity):
 
     self.direction = self.get_input_direction()
     is_moving = self.direction.magnitude() > 0
+
+    if pygame.key.get_pressed()[pygame.K_y] or self.spinning is True:
+      self.spin_handler()
     
     if is_moving:
       self.velocity = self.direction * self.max_speed
-      self.set_state(PlayerState.MOVING)
+      if not self.spinning:
+        self.set_state(PlayerState.MOVING)
       self.idle_direction = self.direction
     else:
       self.velocity = pygame.Vector2(0, 0)
-      self.set_state(PlayerState.IDLE)
+      if not self.spinning:
+        self.set_state(PlayerState.IDLE)
 
     # new state first, anim once we know our new state
 
-    self.anim = self.assets[self.state][self.get_animation_direction(self.idle_direction)]
+    if not self.spinning:
+      self.anim = self.assets[self.state][self.get_animation_direction(self.idle_direction)]
+    else:
+      self.anim = self.assets[self.state]
+
     self.anim.update()
     self.image, self.anim_offset = self.anim.get_img()
 
