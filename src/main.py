@@ -6,13 +6,15 @@ import time
 
 
 
-from entities import PhysicsEntity, Player
+from entities import PhysicsEntity
+from player import Player
 from tiles import TileMap
 from utils import Camera, MAP_TO_JSON
 from enum import Enum, auto
 
 
 class GameState(Enum): PLAYING = auto(); PAUSED = auto(); MAP_EDITOR = auto(); INIT = auto();
+class CollisionType(Enum): HORIZONTAL = auto(); VERTICAL = auto();
 
 '''
 game states 

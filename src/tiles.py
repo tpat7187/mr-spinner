@@ -7,7 +7,7 @@ from utils import load_image, BASE_PIXEL_SCALE, MAP_TO_JSON
 
 
 # all maps inside tilemaps need to be of the same size
-# TODO: offtile rendering
+# TODO: offtile rendering, Tiles with Animations
 class TileMap: 
   def __init__(self, tile_size=32, map_name:Optional[str]=None): 
 
