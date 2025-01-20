@@ -103,10 +103,10 @@ class Game:
     if (entity1.rect.right > entity2.rect.left and 
         entity1.rect.left < entity2.rect.right):
       if (entity1.rect.bottom > entity2.rect.top and 
-          entity1.pos.y + entity1.rect.height <= entity2.rect.top):
+          entity1.position.y + entity1.rect.height <= entity2.rect.top):
         entity1.rect.bottom = entity2.rect.top
       elif (entity1.rect.top < entity2.rect.bottom and 
-            entity1.pos.y >= entity2.rect.bottom):
+            entity1.position.y >= entity2.rect.bottom):
         entity1.rect.top = entity2.rect.bottom
 
     # Handle horizontal collisions
@@ -114,10 +114,10 @@ class Game:
         entity1.rect.top < entity2.rect.bottom):
       
       if (entity1.rect.right > entity2.rect.left and 
-          entity1.pos.x + entity1.rect.width <= entity2.rect.left):
+          entity1.position.x + entity1.rect.width <= entity2.rect.left):
         entity1.rect.right = entity2.rect.left
       elif (entity1.rect.left < entity2.rect.right and 
-            entity1.pos.x >= entity2.rect.right):
+            entity1.position.x >= entity2.rect.right):
         entity1.rect.left = entity2.rect.right
 
   def render(self) -> None:

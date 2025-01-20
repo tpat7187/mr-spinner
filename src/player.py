@@ -40,7 +40,7 @@ class Player(PhysicsEntity):
       PlayerState.SPINNING: Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=8, ed=20, frame_duration=self.spin_frames),
       PlayerState.SPIN_COOLDOWN: Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=20, ed=24, frame_duration=self.spin_cooldown_frames),
     }
-  
+
   def get_input_direction(self) -> pygame.Vector2:
     direction = pygame.Vector2(0, 0)
     keys = pygame.key.get_pressed()
@@ -82,6 +82,7 @@ class Player(PhysicsEntity):
       self.set_state(PlayerState.IDLE)
 
     # new state first, anim once we know our new state
+
     self.anim = self.assets[self.state][self.get_animation_direction(self.idle_direction)]
     self.anim.update()
     self.image, self.anim_offset = self.anim.get_img()

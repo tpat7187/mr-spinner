@@ -23,7 +23,6 @@ class PhysicsEntity(pygame.sprite.Sprite):
       self.image.fill((255, 0, 0))
 
     # physics vectors
-    self.position = pygame.math.Vector2(pos)
     self.velocity = pygame.math.Vector2(0, 0)
     self.direction = pygame.Vector2(0, 1)
 
@@ -38,11 +37,23 @@ class PhysicsEntity(pygame.sprite.Sprite):
     self.anim_offset = [0, 0]
 
   def update_physics(self, dt: float):
-    self.position += self.velocity * dt
 
-    # check collisions here probably
-    self.rect.x = self.position.x
-    self.rect.y = self.position.y
+    self.rect.x += self.velocity.x * dt
+    self.collision(CollisionAxis.HORIZONTAL)
+
+    self.rect.y += self.velocity.y * dt
+    self.collision(CollisionAxis.VERTICAL)
+  
+  def collision(self, type:CollisionAxis): 
+    for sp in self.groups()[0]:
+      if sp.rect.colliderect(self.rect) and sp != self: 
+        if type == CollisionAxis.HORIZONTAL:
+          if self.velocity.x > 0: self.rect.right = sp.rect.left
+          if self.velocity.x < 0: self.rect.left = sp.rect.right
+
+        if type == CollisionAxis.VERTICAL:
+          if self.velocity.y > 0: self.rect.bottom = sp.rect.top
+          if self.velocity.y < 0: self.rect.top = sp.rect.bottom
   
   def set_state(self, new_state:Enum) -> str:
     if self.state != new_state:
@@ -53,8 +64,6 @@ class PhysicsEntity(pygame.sprite.Sprite):
 
       if self.anim: self.anim.reset()
       self.state = new_state
-
-
 
   def render(self, camera_scroll:pygame.Vector2): 
     screen_pos = (
