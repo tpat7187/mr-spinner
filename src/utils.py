@@ -10,17 +10,6 @@ MAP_TO_JSON = {
   'dev' : BASE_PATH + 'maps/map_data.json'
 }
 
-class GameState(Enum): PLAYING = auto(); PAUSED = auto(); MAP_EDITOR = auto();
-
-'''
-game states 
-
-map_editor -> allow user to save/load maps and place tiles
-playing -> play the game
-paused -> no update entities call
-
-'''
-
 
 
 class Camera: 

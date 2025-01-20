@@ -6,13 +6,15 @@ import time
 
 
 
-from entities import PhysicsEntity, Player
+from entities import PhysicsEntity
+from player import Player
 from tiles import TileMap
 from utils import Camera, MAP_TO_JSON
 from enum import Enum, auto
 
 
 class GameState(Enum): PLAYING = auto(); PAUSED = auto(); MAP_EDITOR = auto(); INIT = auto();
+class CollisionType(Enum): HORIZONTAL = auto(); VERTICAL = auto();
 
 '''
 game states 
@@ -83,40 +85,10 @@ class Game:
     if self.state == GameState.PLAYING:
       self.layers['entities'].update(dt)
       self.camera.center_camera_on_target(self.player)
-      self.handle_collisions()
     
     if self.state == GameState.MAP_EDITOR:
       if pygame.key.get_pressed()[pygame.K_g]: self.current_map.place_tile_at_mouse_position(self.camera.scroll)
 
-  # TODO: this sucks
-  def handle_collisions(self) -> None:
-    collisions = pygame.sprite.spritecollide(self.player, self.layers['entities'], False)
-    for entity in collisions:
-      if entity != self.player:
-        self.resolve_collision(self.player, entity)
-
-  # TODO: this sucks
-  def resolve_collision(self, entity1: PhysicsEntity, entity2: PhysicsEntity) -> None:
-    # Handle vertical collisions
-    if (entity1.rect.right > entity2.rect.left and 
-        entity1.rect.left < entity2.rect.right):
-      if (entity1.rect.bottom > entity2.rect.top and 
-          entity1.pos.y + entity1.rect.height <= entity2.rect.top):
-        entity1.rect.bottom = entity2.rect.top
-      elif (entity1.rect.top < entity2.rect.bottom and 
-            entity1.pos.y >= entity2.rect.bottom):
-        entity1.rect.top = entity2.rect.bottom
-
-    # Handle horizontal collisions
-    if (entity1.rect.bottom > entity2.rect.top and 
-        entity1.rect.top < entity2.rect.bottom):
-      
-      if (entity1.rect.right > entity2.rect.left and 
-          entity1.pos.x + entity1.rect.width <= entity2.rect.left):
-        entity1.rect.right = entity2.rect.left
-      elif (entity1.rect.left < entity2.rect.right and 
-            entity1.pos.x >= entity2.rect.right):
-        entity1.rect.left = entity2.rect.right
 
   def render(self) -> None:
     self.screen.fill((0, 0, 0))
@@ -127,6 +99,11 @@ class Game:
     Render Tilemap -> Layers: Hitbox, Background, Foreground
     Render Entities  -> Players, Enemies, Loot, Projectiles
     Render UI 
+
+
+    TODO : Y-SORTED RENDERING ORDER
+    Objects 'above' the player should be rendered before the player
+    Objects 'below' the player should be rendered after the player
     
     '''
 
