@@ -74,9 +74,10 @@ class PhysicsEntity(pygame.sprite.Sprite):
 
 
 class StaticEntity(PhysicsEntity): 
-  def __init__(self, pos: Tuple[int, int], size: Tuple[int, int], e_type:str):
-    super().__init__(pos, size, e_type)
+  def __init__(self, pos: Tuple[int, int], size: Tuple[int, int], e_type:str, asset_path:str):
+    super().__init__(pos, size, e_type, asset_path)
     pass
+  
 
 class DynamicEntity(PhysicsEntity): 
   def __init__(self, pos: Tuple[int, int], size: Tuple[int, int], e_type:str):

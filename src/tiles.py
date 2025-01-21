@@ -2,8 +2,10 @@ import pygame
 import json
 
 from typing import Dict, List, Tuple, Optional
-from utils import load_image, BASE_PIXEL_SCALE, MAP_TO_JSON
+from utils import load_image, BASE_PIXEL_SCALE, MAP_TO_JSON, GameState
 from enum import Enum, auto
+
+from entities import StaticEntity
 
 
 MAX_LAYERS = 3
@@ -33,14 +35,22 @@ class TileMap:
     self.selected_layer = 1
 
     self.state = TileMapState.DRAW
+    self.game_state = GameState.PLAYING
+
+    self.off_grid_assets = []
 
     
+  # whats the best way to load assets for Static Entities
   def load_assets(self): 
     self.tileIDtoTile = { 
       1: load_image('tilemaptest.png'),
+      2: load_image('redtile.png'),
+      3: '../assets/danyaseethe.png'
     }
 
-  def event_handler(self, event, camera_scroll): 
+
+
+  def event_handler(self, event: pygame.event, camera_scroll: list[int, int]): 
     if event.type == pygame.KEYDOWN:
       if event.key == pygame.K_a: self.cycle_tiles()
       elif event.key == pygame.K_d: self.cycle_layers()
@@ -59,7 +69,10 @@ class TileMap:
   @property
   def layer_k(self): return f"layer_{self.selected_layer}"
 
+  def layer_k_to_layer(self, k_str): return int(k_str.replace("layer_", ""))
 
+
+  # offtile assets get rendered at entity render time
   def render(self, camera_scroll, camera_width, camera_height): 
     
     # Calculate visible tile range
@@ -75,18 +88,37 @@ class TileMap:
         if coord in tile_dict:  # Only render if tile exists at coordinate
           screen_x = coord[0] * self.tile_size - camera_scroll[0]
           screen_y = coord[1] * self.tile_size - camera_scroll[1]
-          
+
           tile_id = tile_dict[coord]
-          self.display_surface.blit(self.tileIDtoTile[tile_id], (screen_x, screen_y))
+          tile_to_render = self.tileIDtoTile[tile_id]
+
+          if self.game_state == GameState.MAP_EDITOR:
+            layer_num = self.layer_k_to_layer(layer)
+            opacity_tile = tile_to_render.copy()
+            opacity_tile.set_alpha(255 if layer_num == self.selected_layer else 128)
+          
+            self.display_surface.blit(opacity_tile, (screen_x, screen_y))
+
+          else:
+            self.display_surface.blit(tile_to_render, (screen_x, screen_y))
+    
+
+    return self.off_grid_assets
   
 
   def mouse_position_to_tile(self, camera_scroll): 
-    m_x, m_y = pygame.mouse.get_pos()
+    m_x, m_y = self.mouse_position(camera_scroll)
 
-    m_tile_x = int((m_x + camera_scroll[0] ) // self.tile_size)
-    m_tile_y = int((m_y + camera_scroll[1] ) // self.tile_size)
+    m_tile_x = int((m_x) // self.tile_size)
+    m_tile_y = int((m_y) // self.tile_size)
 
     return (m_tile_x, m_tile_y)
+  
+  def mouse_position(self, camera_scroll): 
+    m_x, m_y = pygame.mouse.get_pos()
+    return (m_x + camera_scroll[0], m_y + camera_scroll[1])
+
+
   
   # cycle through tiles
   def cycle_tiles(self):
@@ -106,9 +138,15 @@ class TileMap:
   
   # TODO: we need more tiles, we need to be able to select a tile and place it :) 
   def place_tile_at_mouse_position(self, camera_scroll): 
-    tile_position = self.mouse_position_to_tile(camera_scroll)
-    self.maps[self.layer_k][tile_position] = 1 
+    if type(self.tileIDtoTile[self.selected_tileID]) != pygame.Surface:
+      mouse_position = self.mouse_position(camera_scroll)
+      new_e = StaticEntity(mouse_position, (25,25), 'test', self.tileIDtoTile[self.selected_tileID])
+      self.off_grid_assets.append(new_e)
+    else:
+      tile_position = self.mouse_position_to_tile(camera_scroll)
+      self.maps[self.layer_k][tile_position] = self.selected_tileID
   
+  # this should check if the mouse is colliderecting with the StaticEntity
   def delete_tile_at_mouse_position(self, camera_scroll):
     tile_position = self.mouse_position_to_tile(camera_scroll)
     if tile_position in self.maps[self.layer_k]:
@@ -116,6 +154,7 @@ class TileMap:
     
   
   def save_current_map(self): 
+    # offgrid are saved as (pos, size, asset)
     dict_to_save = {}
     
     for map_name, map_data in self.maps.items():

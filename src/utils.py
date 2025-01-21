@@ -10,6 +10,7 @@ MAP_TO_JSON = {
   'dev' : BASE_PATH + 'maps/map_data.json'
 }
 
+class GameState(Enum): PLAYING = auto(); PAUSED = auto(); MAP_EDITOR = auto(); INIT = auto();
 
 
 class Camera: 

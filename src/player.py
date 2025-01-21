@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Tuple, Optional
-from utils import load_image
+from utils import load_image, GameState
 import pygame
 
 from entities import PhysicsEntity

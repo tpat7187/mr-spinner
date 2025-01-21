@@ -4,16 +4,12 @@ import pygame
 import sys
 import time
 
-
-
-from entities import PhysicsEntity
 from player import Player
 from tiles import TileMap
-from utils import Camera, MAP_TO_JSON
+from utils import Camera, MAP_TO_JSON, GameState
 from enum import Enum, auto
 
 
-class GameState(Enum): PLAYING = auto(); PAUSED = auto(); MAP_EDITOR = auto(); INIT = auto();
 class CollisionType(Enum): HORIZONTAL = auto(); VERTICAL = auto();
 
 '''
@@ -46,24 +42,19 @@ class Game:
 
   # what are the benifits of using pygame sprite groups over arrays for storage?
   def init_entity_groups(self) -> None:
-    # Define entitiy rendering layers
-    self.layers: Dict[str, pygame.sprite.Group] = {
-      'entities': pygame.sprite.Group(),
-    }
-    self.layer_order: List[str] = list(self.layers.keys())
+    self.entities = pygame.sprite.Group()
   
   def set_state(self, new_state:GameState) -> str:
     if self.state != new_state:
       self.state = new_state
+      self.current_map.game_state = new_state
     
   
   # TODO: refactor
   def init_entities(self) -> None:
     # Initialize player and boxes
     self.player = Player((0, 0), (32, 32))
-    box = PhysicsEntity((50, 50), (30, 30), 'box')
-    self.layers['entities'].add(self.player)
-    self.layers['entities'].add(box)
+    self.entities.add(self.player)
 
   def handle_events(self) -> None:
     for event in pygame.event.get():
@@ -93,7 +84,7 @@ class Game:
   # rendering will continue though
   def update(self, dt:float) -> None:
     if self.state == GameState.PLAYING:
-      self.layers['entities'].update(dt)
+      self.entities.update(dt)
       self.camera.center_camera_on_target(self.player)
 
 
@@ -107,21 +98,21 @@ class Game:
     Render Entities  -> Players, Enemies, Loot, Projectiles
     Render UI 
 
-
-    TODO : Y-SORTED RENDERING ORDER
-    Objects 'above' the player should be rendered before the player
-    Objects 'below' the player should be rendered after the player
     
     '''
 
     # Render tilemap
-    self.current_map.render([self.camera.scroll.x, self.camera.scroll.y], self.camera.width, self.camera.height)
+    off_grid = self.current_map.render([self.camera.scroll.x, self.camera.scroll.y], self.camera.width, self.camera.height)
+
+    # move offgrid assets to entities group
+    for _ in off_grid: 
+      self.entities.add(_)
+
     
-    # Render Entities
-    for layer in self.layer_order:
-      if self.layers[layer]:
-        for sprite in self.layers[layer]:
-          sprite.render(self.camera.scroll)
+    # render y-sorted entities
+    for sprite in sorted(self.entities, key=lambda sprite: sprite.rect.bottom):
+      sprite.render(self.camera.scroll)
+
     
 
     # Render UI 
