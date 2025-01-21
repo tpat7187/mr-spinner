@@ -68,6 +68,7 @@ class Game:
   def handle_events(self) -> None:
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
+        self.current_map.save_current_map()
         self.running = False
       
       
@@ -80,14 +81,20 @@ class Game:
           if self.state == GameState.PAUSED: self.set_state(GameState.PLAYING)
           elif self.state == GameState.PLAYING: self.set_state(GameState.PAUSED)
       
+
+      if self.state == GameState.MAP_EDITOR: 
+        self.current_map.event_handler(event, self.camera.scroll)
       
+      # if self.state == GameState.PLAYING we should probably add a player event handler as well idk
+      # right now we're simply pulling the keys pressed every frame, not the keydown event
+      
+      
+  # tilemap updates should only happen while State = MapEDITOR
+  # rendering will continue though
   def update(self, dt:float) -> None:
     if self.state == GameState.PLAYING:
       self.layers['entities'].update(dt)
       self.camera.center_camera_on_target(self.player)
-    
-    if self.state == GameState.MAP_EDITOR:
-      if pygame.key.get_pressed()[pygame.K_g]: self.current_map.place_tile_at_mouse_position(self.camera.scroll)
 
 
   def render(self) -> None:
@@ -130,6 +137,18 @@ class Game:
     )
 
     self.screen.blit(text_surface, fps_counter_position)
+
+
+    # Map Editor UI thing
+    if self.state == GameState.MAP_EDITOR:
+      map_editor_ui = my_font.render(f"selected tile: {self.current_map.selected_tileID}\nselected layer: {self.current_map.selected_layer}\neditor state: {self.current_map.state}", False, (255, 255, 255))
+
+      map_editor_ui_pos = ( 
+        self.player.rect.x - self.camera.scroll.x - 600, 
+        self.player.rect.y - self.camera.scroll.y - 320
+      )
+
+      self.screen.blit(map_editor_ui, map_editor_ui_pos)
 
     
     pygame.display.update()

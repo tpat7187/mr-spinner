@@ -3,12 +3,17 @@ import json
 
 from typing import Dict, List, Tuple, Optional
 from utils import load_image, BASE_PIXEL_SCALE, MAP_TO_JSON
+from enum import Enum, auto
 
 
+MAX_LAYERS = 3
 
 # all maps inside tilemaps need to be of the same size
 # TODO: offtile rendering, Tiles with Animations
 # Static Entities are saved on the tilemap but get rendered during the entitiy rendeirng pass
+
+class TileMapState(Enum): DRAW = auto(); DELETE = auto();
+
 class TileMap: 
   def __init__(self, tile_size=32, map_name:Optional[str]=None): 
 
@@ -20,11 +25,40 @@ class TileMap:
     self.display_surface = pygame.display.get_surface()
     
     self.load_assets()
+
+    self.layers = list(self.maps.keys())
+
+    # stuff for tile editor
+    self.selected_tileID = 1
+    self.selected_layer = 1
+
+    self.state = TileMapState.DRAW
+
     
   def load_assets(self): 
     self.tileIDtoTile = { 
       1: load_image('tilemaptest.png'),
     }
+
+  def event_handler(self, event, camera_scroll): 
+    if event.type == pygame.KEYDOWN:
+      if event.key == pygame.K_a: self.cycle_tiles()
+      elif event.key == pygame.K_d: self.cycle_layers()
+      elif event.key == pygame.K_f: 
+        if self.state == TileMapState.DRAW: self.set_state(TileMapState.DELETE)
+        elif self.state == TileMapState.DELETE: self.set_state(TileMapState.DRAW)
+
+    # get_pressed returns (bool, bool, bool) for all 3 mouse buttons
+    if pygame.mouse.get_pressed()[0]:
+      if self.state == TileMapState.DRAW:
+        self.place_tile_at_mouse_position(camera_scroll)
+
+      if self.state == TileMapState.DELETE:
+        self.delete_tile_at_mouse_position(camera_scroll)
+  
+  @property
+  def layer_k(self): return f"layer_{self.selected_layer}"
+
 
   def render(self, camera_scroll, camera_width, camera_height): 
     
@@ -54,10 +88,32 @@ class TileMap:
 
     return (m_tile_x, m_tile_y)
   
+  # cycle through tiles
+  def cycle_tiles(self):
+    self.selected_tileID = (self.selected_tileID % len(self.tileIDtoTile)) + 1
+    return self.selected_tileID
+
+  # change current layer 
+  def cycle_layers(self): 
+    self.selected_layer = (self.selected_layer % MAX_LAYERS) + 1
+    if self.selected_layer > len(self.layers): 
+      self.maps[self.layer_k] = {}
+    return self.selected_layer
+
+  def set_state(self, state:TileMapState):
+    if self.state != state: self.state = state
+
+  
   # TODO: we need more tiles, we need to be able to select a tile and place it :) 
   def place_tile_at_mouse_position(self, camera_scroll): 
     tile_position = self.mouse_position_to_tile(camera_scroll)
-    self.maps['background'][tile_position] = 1 
+    self.maps[self.layer_k][tile_position] = 1 
+  
+  def delete_tile_at_mouse_position(self, camera_scroll):
+    tile_position = self.mouse_position_to_tile(camera_scroll)
+    if tile_position in self.maps[self.layer_k]:
+      del self.maps[self.layer_k][tile_position]
+    
   
   def save_current_map(self): 
     dict_to_save = {}
@@ -68,7 +124,7 @@ class TileMap:
         for key, value in map_data.items()
       }
     
-    with open('map_data.json', 'w') as f:
+    with open('../assets/maps/map_data.json', 'w') as f:
       json.dump(dict_to_save, f, indent=2)
   
   def load_map(self, map_path): 

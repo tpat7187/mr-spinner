@@ -4,15 +4,12 @@ TODO:
 Things to do: 
 
 Map Editor Sprite Sheet functionality
-- More Map editor functionality, the ability to swap between layers in the tilemap and tile we're gonna place
 - off grid rendering
 
 Static Entities
 - Test Animations, like trees shaking n shit
 
 __Corrran:__
-
-spinning
 
 offtile asset rendering on tilemaps
 
