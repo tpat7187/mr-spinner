@@ -163,8 +163,6 @@ class TileMap:
           dict_to_save[map_name] = { 
             str(j.get_pos): j.get_asset_id
           }
-
-          print(dict_to_save[map_name])
       
     with open('../assets/maps/map_data.json', 'w') as f:
       json.dump(dict_to_save, f, indent=2)

@@ -3,7 +3,7 @@ import pygame
 from utils import load_image, BASE_PIXEL_SCALE
 
 class Animation:
-  def __init__(self, sprite_sheet_path, rows, columns, frame_duration = 5, hit_box_size=(32, 32), loop=False, st=1, ed=None): 
+  def __init__(self, sprite_sheet_path, rows, columns, frame_duration = 5, hit_box_size=(32, 32), loop=False, st=1, ed=None, total_animation_time:int=None): 
     self.sprite_sheet_path = sprite_sheet_path
     self.sheet_rows = rows 
     self.sheet_columns = columns
@@ -15,7 +15,11 @@ class Animation:
 
     self.sheet = load_image(self.sprite_sheet_path, BASE_PIXEL_SCALE)
 
-    self.animation_frame_duration = frame_duration
+    if total_animation_time is not None: 
+      self.animation_frame_duration = total_animation_time / (self.ed - self.st) 
+    
+    else: self.animation_frame_duration = frame_duration
+
     self.game_frame = st * self.animation_frame_duration
     
     # frame dim
@@ -28,7 +32,7 @@ class Animation:
   
   # TODO: handle non looping
   def update(self):
-    relative_frame = ((self.game_frame - (self.st * self.animation_frame_duration) + 1) % (self.animation_frame_duration * (self.ed - self.st)))
+    relative_frame = ((self.game_frame - (self.st * self.animation_frame_duration) + 1) % (self.animation_frame_duration * (self.ed - self.st + 1)))
     self.game_frame = relative_frame + (self.st * self.animation_frame_duration)
   
   def reset(self): 
@@ -36,7 +40,8 @@ class Animation:
   
   def get_img(self): 
     current_frame = self.game_frame // self.animation_frame_duration
-    frame_x = current_frame * self.frame_width
+    # all animations were offset by 1 since current_frame * self.frame_width would not start at 0 pixels
+    frame_x = (current_frame - 1) * self.frame_width
     frame_y = 0  # TODO: update when we have more complicated sprite sheets
 
     # Create full-size surface for the animation frame

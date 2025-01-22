@@ -8,9 +8,7 @@ Static Entities
 
 __Corrran:__
 
-physics entity constructor for pygame.surfac
-
-saving/loading offgrid
+hitboxes from the tilemap that arent entities
 
 animation framerate independence
 

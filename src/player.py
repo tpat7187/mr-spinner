@@ -19,8 +19,8 @@ class Player(PhysicsEntity):
     # spin stats
     self.spinning = False
     self.spin_frame_count = 0
-    self.spin_startup_frames = 150
-    self.spin_frames = 300
+    self.spin_startup_frames = 100
+    self.spin_frames = 150
     self.spin_cooldown_frames = 100
 
     # load assets [state, animation]
@@ -37,9 +37,9 @@ class Player(PhysicsEntity):
         (1, 0): Animation("../assets/player/Sword_2_Template_Run_Right-Sheet.png", 1, 6, frame_duration=15),
         (0, -1): Animation("../assets/player/Sword_2_Template_Run_Up-Sheet.png", 1, 6, frame_duration=15),
       },
-      PlayerState.SPIN_STARTUP: Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=1, ed=7, frame_duration=5),
-      PlayerState.SPINNING: Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=8, ed=17, frame_duration=5),
-      PlayerState.SPIN_COOLDOWN: Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=18, ed=24, frame_duration=5),
+      PlayerState.SPIN_STARTUP: Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=1, ed=7, total_animation_time=self.spin_startup_frames, loop=False),
+      PlayerState.SPINNING: Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=7, ed=18, total_animation_time=self.spin_frames, loop=False),
+      PlayerState.SPIN_COOLDOWN: Animation("../assets/player/Sword_10_Template_Special_Attack_Down-Sheet.png", 1, 24, st=18, ed=24, total_animation_time=self.spin_cooldown_frames, loop=False),
     }
 
   def get_input_direction(self) -> pygame.Vector2:
@@ -50,6 +50,8 @@ class Player(PhysicsEntity):
     if keys[pygame.K_a]: direction.x -= 1
     if keys[pygame.K_w]: direction.y -= 1
     if keys[pygame.K_s]: direction.y += 1
+
+
     
     if direction.magnitude() > 0:
       return direction.normalize()
@@ -61,6 +63,7 @@ class Player(PhysicsEntity):
       self.set_state(PlayerState.SPIN_STARTUP)
     elif self.spin_startup_frames <= self.spin_frame_count < self.spin_startup_frames + self.spin_frames:
       self.set_state(PlayerState.SPINNING)
+      if pygame.key.get_pressed()[pygame.K_y]: self.spin_frame_count = self.spin_startup_frames
     elif self.spin_startup_frames + self.spin_frames <= self.spin_frame_count < self.spin_startup_frames + self.spin_frames + self.spin_cooldown_frames:
       self.set_state(PlayerState.SPIN_COOLDOWN)
     else:

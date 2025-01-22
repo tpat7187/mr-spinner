@@ -67,10 +67,6 @@ class PhysicsEntity(pygame.sprite.Sprite):
   def set_state(self, new_state:Enum) -> str:
     if self.state != new_state:
 
-      # when states change we need to reset the game_frame on the animation object
-      # which means we need to know the animation object of the new state and reset it before rendering
-      # or we could do it the opposite way: set the current animation game_frame state to 0 before rendering
-
       if self.anim: self.anim.reset()
       self.state = new_state
 
