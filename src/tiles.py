@@ -154,7 +154,8 @@ class TileMap:
   def place_tile_at_mouse_position(self, camera_scroll): 
     if self.selected_asset.type == AssetType.OFF_GRID:
       mouse_position = self.mouse_position(camera_scroll)
-      new_e = StaticEntity(mouse_position, (25,25), 'test', self.selected_asset.asset)
+      sz = self.selected_asset.asset.size
+      new_e = StaticEntity(mouse_position, (25,25), self.selected_asset.asset)
       self.off_grid_assets.append(new_e)
     else:
       tile_position = self.mouse_position_to_tile(camera_scroll)
@@ -176,6 +177,8 @@ class TileMap:
         str(key): value 
         for key, value in map_data.items()
       }
+    
+    # off grid
     
     with open('../assets/maps/map_data.json', 'w') as f:
       json.dump(dict_to_save, f, indent=2)

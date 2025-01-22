@@ -11,7 +11,7 @@ class CollisionAxis(Enum): HORIZONTAL = auto(); VERTICAL = auto();
 class EntityState(Enum): IDLE = auto(); MOVING = auto();
 
 class PhysicsEntity(pygame.sprite.Sprite): 
-  def __init__(self, pos: Tuple[int, int], size: Tuple[int, int], e_type:str, surface:Optional[pygame.Surface]=None): 
+  def __init__(self, pos: Tuple[int, int], size: Optional[Tuple[int, int]]=None, surface:Optional[pygame.Surface]=None): 
     super().__init__()  
     self.display_surface = pygame.display.get_surface()
     
@@ -29,10 +29,10 @@ class PhysicsEntity(pygame.sprite.Sprite):
     self.assets = None
     self.anim = None
 
-    self.e_type = e_type
-
     # hitbox data
     self.rect = self.image.get_frect(topleft=pos)
+    # interesting behaviour
+    #self.rect = pygame.FRect(pos[0], pos[1], size[0], size[1])
     self.anim_offset = [0, 0]
 
   def update_physics(self, dt: float):
@@ -73,13 +73,13 @@ class PhysicsEntity(pygame.sprite.Sprite):
 
 
 class StaticEntity(PhysicsEntity): 
-  def __init__(self, pos: Tuple[int, int], size: Tuple[int, int], e_type:str, surface:Optional[pygame.Surface]):
-    super().__init__(pos, size, e_type, surface)
+  def __init__(self, pos: Tuple[int, int], size: Optional[Tuple[int, int]]=None, surface:Optional[pygame.Surface]=None): 
+    super().__init__(pos, size, surface)
   
 
 class DynamicEntity(PhysicsEntity): 
-  def __init__(self, pos: Tuple[int, int], size: Tuple[int, int], e_type:str):
-    super().__init__(pos, size, e_type)
+  def __init__(self, pos: Tuple[int, int], size: Optional[Tuple[int, int]]=None, surface:Optional[pygame.Surface]=None): 
+    super().__init__(pos, size, surface)
 
 
 

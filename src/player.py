@@ -11,7 +11,7 @@ class PlayerState(Enum): IDLE = auto(); MOVING = auto(); SPIN_STARTUP = auto(); 
 
 class Player(PhysicsEntity): 
   def __init__(self, pos: Tuple[int, int], size: Tuple[int, int]):
-    super().__init__(pos, size, 'player') 
+    super().__init__(pos, size) 
     self.max_speed = 200
     self.state = PlayerState.IDLE
     self.idle_direction = self.direction
