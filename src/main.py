@@ -132,7 +132,7 @@ class Game:
 
     # Map Editor UI thing
     if self.state == GameState.MAP_EDITOR:
-      map_editor_ui = my_font.render(f"selected tile: {self.current_map.selected_tileID}\nselected layer: {self.current_map.selected_layer}\neditor state: {self.current_map.state}", False, (255, 255, 255))
+      map_editor_ui = my_font.render(f"selected tile: {self.current_map.selected_tile_id}\nselected layer: {self.current_map.selected_layer}\neditor state: {self.current_map.state}", False, (255, 255, 255))
 
       map_editor_ui_pos = ( 
         self.player.rect.x - self.camera.scroll.x - 600, 

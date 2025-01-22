@@ -23,44 +23,48 @@ class AssetType(Enum): ON_GRID = auto(); OFF_GRID = auto()
 class tmAsset: 
   asset: pygame.Surface
   type: AssetType
+  id : int
 
 
 class TileMap: 
   def __init__(self, tile_size=32, map_name:Optional[str]=None): 
 
+    self.load_assets()
+
     if map_name: 
-      self.maps = self.load_map(MAP_TO_JSON[map_name])
+      self.maps, self.off_grid_assets = self.load_map(MAP_TO_JSON[map_name])
 
     #self.maps = self.load_map()
     self.tile_size = tile_size * BASE_PIXEL_SCALE
     self.display_surface = pygame.display.get_surface()
     
-    self.load_assets()
 
     self.layers = list(self.maps.keys())
 
     # stuff for tile editor
-    self.selected_tileID = 1
+    self.selected_tile_id = 1
     self.selected_layer = 1
 
     self.state = TileMapState.DRAW
     self.game_state = GameState.PLAYING
 
-    self.off_grid_assets = []
+    # need better init
+    if 'offgrid' not in self.maps: self.maps['offgrid'] = {}
+    if self.off_grid_assets is None: self.off_grid_assets = []
+
+
 
     
   # whats the best way to load assets for Static Entities
   def load_assets(self): 
     self.tileIDtoTile = { 
-      1: tmAsset(load_image('tilemaptest.png'), AssetType.ON_GRID),
-      2: tmAsset(load_image('redtile.png'), AssetType.ON_GRID),
-      3: tmAsset(load_image('../assets/danyaseethe.png', scale=False), AssetType.OFF_GRID)
+      1: tmAsset(load_image('tilemaptest.png'), AssetType.ON_GRID, 1),
+      2: tmAsset(load_image('redtile.png'), AssetType.ON_GRID, 2),
+      3: tmAsset(load_image('../assets/danyaseethe.png', scale=False), AssetType.OFF_GRID, 3)
     }
   
   def init_asset_cache(self): 
     pass
-
-
 
   def event_handler(self, event: pygame.event, camera_scroll: list[int, int]): 
     if event.type == pygame.KEYDOWN:
@@ -72,17 +76,14 @@ class TileMap:
 
     # get_pressed returns (bool, bool, bool) for all 3 mouse buttons
     if pygame.mouse.get_pressed()[0]:
-      if self.state == TileMapState.DRAW:
-        self.place_tile_at_mouse_position(camera_scroll)
-
-      if self.state == TileMapState.DELETE:
-        self.delete_tile_at_mouse_position(camera_scroll)
+      if self.state == TileMapState.DRAW: self.place_tile_at_mouse_position(camera_scroll)
+      if self.state == TileMapState.DELETE: self.delete_tile_at_mouse_position(camera_scroll)
   
   @property
   def layer_k(self): return f"layer_{self.selected_layer}"
 
   @property
-  def selected_asset(self): return self.tileIDtoTile[self.selected_tileID]
+  def selected_asset(self): return self.tileIDtoTile[self.selected_tile_id]
 
   def layer_k_to_layer(self, k_str): return int(k_str.replace("layer_", ""))
 
@@ -136,8 +137,8 @@ class TileMap:
 
   # cycle through tiles
   def cycle_tiles(self):
-    self.selected_tileID = (self.selected_tileID % len(self.tileIDtoTile)) + 1
-    return self.selected_tileID
+    self.selected_tile_id = (self.selected_tile_id % len(self.tileIDtoTile)) + 1
+    return self.selected_tile_id
 
   # change current layer 
   def cycle_layers(self): 
@@ -154,12 +155,14 @@ class TileMap:
   def place_tile_at_mouse_position(self, camera_scroll): 
     if self.selected_asset.type == AssetType.OFF_GRID:
       mouse_position = self.mouse_position(camera_scroll)
-      sz = self.selected_asset.asset.size
-      new_e = StaticEntity(mouse_position, (25,25), self.selected_asset.asset)
+      new_e = StaticEntity(mouse_position, surface=self.selected_asset.asset)
       self.off_grid_assets.append(new_e)
+
+      # stupid hack, cant think of a way to store tmAsset ID, mouse position on the StaticEntity without adding needless complexity on entity init/rendering
+      self.maps['offgrid'][mouse_position] = self.selected_asset.id
     else:
       tile_position = self.mouse_position_to_tile(camera_scroll)
-      self.maps[self.layer_k][tile_position] = self.selected_tileID
+      self.maps[self.layer_k][tile_position] = self.selected_tile_id
   
   # this should check if the mouse is colliderecting with the StaticEntity
   def delete_tile_at_mouse_position(self, camera_scroll):
@@ -178,7 +181,6 @@ class TileMap:
         for key, value in map_data.items()
       }
     
-    # off grid
     
     with open('../assets/maps/map_data.json', 'w') as f:
       json.dump(dict_to_save, f, indent=2)
@@ -193,8 +195,9 @@ class TileMap:
         eval(key): value 
         for key, value in map_data.items()
       }
-      
-    return maps_dict
+    
+    off_grid = [StaticEntity(i, surface=self.tileIDtoTile[j].asset) for i,j in maps_dict['offgrid'].items()]
+    return maps_dict, off_grid
     
 
 
