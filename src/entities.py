@@ -11,14 +11,13 @@ class CollisionAxis(Enum): HORIZONTAL = auto(); VERTICAL = auto();
 class EntityState(Enum): IDLE = auto(); MOVING = auto();
 
 class PhysicsEntity(pygame.sprite.Sprite): 
-  def __init__(self, pos: Tuple[int, int], size: Tuple[int, int], e_type:str, asset_path:Optional[str]=None): 
+  def __init__(self, pos: Tuple[int, int], size: Tuple[int, int], e_type:str, surface:Optional[pygame.Surface]=None): 
     super().__init__()  
     self.display_surface = pygame.display.get_surface()
     
     # image data
-    if asset_path is not None: 
-      self.image = load_image(asset_path)
-    else: 
+    if surface: self.image = surface
+    else:
       self.image = pygame.Surface(size)
       self.image.fill((255, 0, 0))
 
@@ -74,15 +73,13 @@ class PhysicsEntity(pygame.sprite.Sprite):
 
 
 class StaticEntity(PhysicsEntity): 
-  def __init__(self, pos: Tuple[int, int], size: Tuple[int, int], e_type:str, asset_path:str):
-    super().__init__(pos, size, e_type, asset_path)
-    pass
+  def __init__(self, pos: Tuple[int, int], size: Tuple[int, int], e_type:str, surface:Optional[pygame.Surface]):
+    super().__init__(pos, size, e_type, surface)
   
 
 class DynamicEntity(PhysicsEntity): 
   def __init__(self, pos: Tuple[int, int], size: Tuple[int, int], e_type:str):
     super().__init__(pos, size, e_type)
-    pass
 
 
 

@@ -5,6 +5,8 @@ from typing import Dict, List, Tuple, Optional
 from utils import load_image, BASE_PIXEL_SCALE, MAP_TO_JSON, GameState
 from enum import Enum, auto
 
+from dataclasses import dataclass
+
 from entities import StaticEntity
 
 
@@ -15,6 +17,13 @@ MAX_LAYERS = 3
 # Static Entities are saved on the tilemap but get rendered during the entitiy rendeirng pass
 
 class TileMapState(Enum): DRAW = auto(); DELETE = auto();
+class AssetType(Enum): ON_GRID = auto(); OFF_GRID = auto()
+
+@dataclass
+class tmAsset: 
+  asset: pygame.Surface
+  type: AssetType
+
 
 class TileMap: 
   def __init__(self, tile_size=32, map_name:Optional[str]=None): 
@@ -43,10 +52,13 @@ class TileMap:
   # whats the best way to load assets for Static Entities
   def load_assets(self): 
     self.tileIDtoTile = { 
-      1: load_image('tilemaptest.png'),
-      2: load_image('redtile.png'),
-      3: '../assets/danyaseethe.png'
+      1: tmAsset(load_image('tilemaptest.png'), AssetType.ON_GRID),
+      2: tmAsset(load_image('redtile.png'), AssetType.ON_GRID),
+      3: tmAsset(load_image('../assets/danyaseethe.png', scale=False), AssetType.OFF_GRID)
     }
+  
+  def init_asset_cache(self): 
+    pass
 
 
 
@@ -69,6 +81,9 @@ class TileMap:
   @property
   def layer_k(self): return f"layer_{self.selected_layer}"
 
+  @property
+  def selected_asset(self): return self.tileIDtoTile[self.selected_tileID]
+
   def layer_k_to_layer(self, k_str): return int(k_str.replace("layer_", ""))
 
 
@@ -90,8 +105,9 @@ class TileMap:
           screen_y = coord[1] * self.tile_size - camera_scroll[1]
 
           tile_id = tile_dict[coord]
-          tile_to_render = self.tileIDtoTile[tile_id]
+          tile_to_render = self.tileIDtoTile[tile_id].asset
 
+          # we can make this a lot faster but I dont think it matters
           if self.game_state == GameState.MAP_EDITOR:
             layer_num = self.layer_k_to_layer(layer)
             opacity_tile = tile_to_render.copy()
@@ -118,8 +134,6 @@ class TileMap:
     m_x, m_y = pygame.mouse.get_pos()
     return (m_x + camera_scroll[0], m_y + camera_scroll[1])
 
-
-  
   # cycle through tiles
   def cycle_tiles(self):
     self.selected_tileID = (self.selected_tileID % len(self.tileIDtoTile)) + 1
@@ -138,9 +152,9 @@ class TileMap:
   
   # TODO: we need more tiles, we need to be able to select a tile and place it :) 
   def place_tile_at_mouse_position(self, camera_scroll): 
-    if type(self.tileIDtoTile[self.selected_tileID]) != pygame.Surface:
+    if self.selected_asset.type == AssetType.OFF_GRID:
       mouse_position = self.mouse_position(camera_scroll)
-      new_e = StaticEntity(mouse_position, (25,25), 'test', self.tileIDtoTile[self.selected_tileID])
+      new_e = StaticEntity(mouse_position, (25,25), 'test', self.selected_asset.asset)
       self.off_grid_assets.append(new_e)
     else:
       tile_position = self.mouse_position_to_tile(camera_scroll)

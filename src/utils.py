@@ -23,6 +23,7 @@ class Camera:
     self.scroll.y = target.rect.centery - self.height // 2    
 
 
-def load_image(path:str, pixel_scale=BASE_PIXEL_SCALE) -> pygame.Surface:
+def load_image(path:str, pixel_scale=BASE_PIXEL_SCALE, scale:bool=True) -> pygame.Surface:
+  scale = pixel_scale if scale else 1
   img = pygame.image.load(BASE_PATH + path).convert()
-  return pygame.transform.scale(img, (img.get_width() * pixel_scale, img.get_height() * BASE_PIXEL_SCALE))
+  return pygame.transform.scale(img, (img.get_width() * scale, img.get_height() * scale))

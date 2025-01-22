@@ -3,15 +3,14 @@ TODO:
 
 Things to do: 
 
-Map Editor Sprite Sheet functionality
-- off grid rendering
-
 Static Entities
 - Test Animations, like trees shaking n shit
 
 __Corrran:__
 
-offtile asset rendering on tilemaps
+physics entity constructor for pygame.surfac
+
+saving/loading offgrid
 
 animation framerate independence
 
