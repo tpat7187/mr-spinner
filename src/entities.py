@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Tuple, Optional
-from utils import load_image
+from utils import load_image, tmAsset
 import pygame
 
 from animation import Animation
@@ -10,16 +10,20 @@ from enum import Enum, auto
 class CollisionAxis(Enum): HORIZONTAL = auto(); VERTICAL = auto();
 class EntityState(Enum): IDLE = auto(); MOVING = auto();
 
+# require a size or a asset
 class PhysicsEntity(pygame.sprite.Sprite): 
-  def __init__(self, pos: Tuple[int, int], size: Optional[Tuple[int, int]]=None, surface:Optional[pygame.Surface]=None): 
+  def __init__(self, pos: Tuple[int, int], size: Optional[Tuple[int, int]]=None, asset:Optional[tmAsset]=None): 
     super().__init__()  
     self.display_surface = pygame.display.get_surface()
     
-    # image data
-    if surface: self.image = surface
-    else:
+    # this is terrible
+    if asset:
+      self.asset = asset
+      self.image = asset.asset
+    else: 
       self.image = pygame.Surface(size)
       self.image.fill((255, 0, 0))
+      self.asset = None
 
     # physics vectors
     self.velocity = pygame.math.Vector2(0, 0)
@@ -34,6 +38,12 @@ class PhysicsEntity(pygame.sprite.Sprite):
     # interesting behaviour
     #self.rect = pygame.FRect(pos[0], pos[1], size[0], size[1])
     self.anim_offset = [0, 0]
+  
+  @property
+  def get_pos(self): return (self.rect.x, self.rect.y)
+
+  @property
+  def get_asset_id(self): return self.asset.id
 
   def update_physics(self, dt: float):
 
@@ -73,8 +83,8 @@ class PhysicsEntity(pygame.sprite.Sprite):
 
 
 class StaticEntity(PhysicsEntity): 
-  def __init__(self, pos: Tuple[int, int], size: Optional[Tuple[int, int]]=None, surface:Optional[pygame.Surface]=None): 
-    super().__init__(pos, size, surface)
+  def __init__(self, pos: Tuple[int, int], size: Optional[Tuple[int, int]]=None, asset:Optional[tmAsset]=None): 
+    super().__init__(pos, size, asset)
   
 
 class DynamicEntity(PhysicsEntity): 

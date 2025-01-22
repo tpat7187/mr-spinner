@@ -1,24 +1,17 @@
 import pygame
 import json
 from typing import Dict, List, Tuple, Optional
-from utils import load_image, BASE_PIXEL_SCALE, MAP_TO_JSON, GameState
+from utils import load_image, BASE_PIXEL_SCALE, MAP_TO_JSON, GameState, tmAsset, AssetType
 from enum import Enum, auto
-from dataclasses import dataclass
 from entities import StaticEntity
 
 MAX_LAYERS = 3
 
 class TileMapState(Enum): DRAW = auto(); DELETE = auto();
-class AssetType(Enum): ON_GRID = auto(); OFF_GRID = auto();
 
-@dataclass
-class tmAsset:
-  asset: pygame.Surface
-  type: AssetType
-  id: int
 
 class TileMap:
-  def __init__(self, tile_size=32, map_name: Optional[str]=None):
+  def __init__(self, tile_size=31, map_name: Optional[str]=None):
     self.load_assets()
 
     if map_name:
@@ -132,7 +125,7 @@ class TileMap:
   def place_tile_at_mouse_position(self, camera_scroll) -> Optional[StaticEntity]:
     if self.selected_asset.type == AssetType.OFF_GRID:
       mouse_position = self.mouse_position(camera_scroll)
-      new_e = StaticEntity(mouse_position, surface=self.selected_asset.asset)
+      new_e = StaticEntity(mouse_position, asset=self.selected_asset)
       self.off_grid_assets.append(new_e)
       self.maps['offgrid'][mouse_position] = self.selected_asset.id
       return new_e
@@ -148,7 +141,7 @@ class TileMap:
         self.off_grid_assets.remove(entity)
         if mp in self.maps['offgrid']:
           del self.maps['offgrid'][mp]
-        return entity  # This is what we'll remove from sprite group in main
+        return entity 
 
     tile_position = self.mouse_position_to_tile(camera_scroll)
     if tile_position in self.maps[self.layer_k]:
@@ -159,10 +152,19 @@ class TileMap:
     dict_to_save = {}
 
     for map_name, map_data in self.maps.items():
-      dict_to_save[map_name] = {
-        str(key): value
-        for key, value in map_data.items()
-      }
+      print(map_name)
+      if map_name != 'offgrid':
+        dict_to_save[map_name] = {
+          str(key): value
+          for key, value in map_data.items()
+        }
+      else:
+        for j in self.off_grid_assets: 
+          dict_to_save[map_name] = { 
+            str(j.get_pos): j.get_asset_id
+          }
+
+          print(dict_to_save[map_name])
       
     with open('../assets/maps/map_data.json', 'w') as f:
       json.dump(dict_to_save, f, indent=2)
@@ -183,8 +185,8 @@ class TileMap:
 
     if 'offgrid' in maps_dict:
       for pos, tile_id in maps_dict['offgrid'].items():
-        asset = self.tileIDtoTile[tile_id].asset
-        ent = StaticEntity(pos, surface=asset)
+        asset = self.tileIDtoTile[tile_id]
+        ent = StaticEntity(tuple(pos), asset=asset)
         off_grid.append(ent)
 
     return maps_dict, off_grid

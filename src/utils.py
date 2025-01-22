@@ -1,5 +1,6 @@
 import pygame
 from enum import Enum, auto
+from dataclasses import dataclass
 
 
 
@@ -11,7 +12,13 @@ MAP_TO_JSON = {
 }
 
 class GameState(Enum): PLAYING = auto(); PAUSED = auto(); MAP_EDITOR = auto(); INIT = auto();
+class AssetType(Enum): ON_GRID = auto(); OFF_GRID = auto();
 
+@dataclass
+class tmAsset:
+  asset: pygame.Surface
+  type: AssetType
+  id: int
 
 class Camera: 
   def __init__(self, width, height): 
