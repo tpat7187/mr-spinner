@@ -136,10 +136,11 @@ class TileMap:
     return self.selected_tile_id
 
   def cycle_layers(self) -> int:
-    self.selected_layer = (self.selected_layer % MAX_LAYERS) + 1
-    if self.selected_layer > len(self.layers):
-      self.maps[self.layer_k] = {}
-    return self.selected_layer
+    if self.selected_layer != 'Boundary':
+      self.selected_layer = (self.selected_layer % MAX_LAYERS) + 1
+      if self.selected_layer > len(self.layers):
+        self.maps[self.layer_k] = {}
+      return self.selected_layer
 
   def set_state(self, state: TileMapState):
     if self.state != state:

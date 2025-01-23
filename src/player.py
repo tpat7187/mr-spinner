@@ -1,15 +1,14 @@
 from __future__ import annotations
 from typing import Tuple, Optional
-from utils import load_image, GameState
 import pygame
 
-from entities import PhysicsEntity
+from entities import DynamicEntity
 from animation import Animation
 from enum import Enum, auto
 
 class PlayerState(Enum): IDLE = auto(); MOVING = auto(); SPIN_STARTUP = auto(); SPINNING = auto(); SPIN_COOLDOWN = auto();
 
-class Player(PhysicsEntity): 
+class Player(DynamicEntity): 
   def __init__(self, pos: Tuple[int, int], size: Tuple[int, int]):
     super().__init__(pos, size) 
     self.max_speed = 200
@@ -101,7 +100,6 @@ class Player(PhysicsEntity):
       self.anim = self.assets[self.state]
 
     self.anim.update()
-    self.image, self.anim_offset = self.anim.get_img()
-
+    self.renderer.image, self.renderer.anim_offset = self.anim.get_img()
     self.update_physics(dt)
   
