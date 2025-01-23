@@ -48,7 +48,5 @@ class Animation:
     frame_surface = pygame.Surface((self.frame_width, self.frame_height), pygame.SRCALPHA)
     frame_surface.blit(self.sheet, (0, 0), (frame_x, frame_y, self.frame_width, self.frame_height))
     frame_surface.set_colorkey((0, 0, 0))
-
-    print(frame_x)
     
     return frame_surface, (self.x_offset, self.y_offset)
