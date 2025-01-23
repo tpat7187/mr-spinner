@@ -8,6 +8,11 @@ Static Entities
 
 __Corrran:__
 
+remove static entitiy from physics entity
+  - the only physics they will have is collision
+  - at update time (static entities + player) will have collision applied to them
+  - tilemap boundaries can be invisible static entities 
+
 hitboxes from the tilemap that arent entities
 
 animation framerate independence

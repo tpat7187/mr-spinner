@@ -51,8 +51,6 @@ class Player(PhysicsEntity):
     if keys[pygame.K_w]: direction.y -= 1
     if keys[pygame.K_s]: direction.y += 1
 
-
-    
     if direction.magnitude() > 0:
       return direction.normalize()
     return direction
@@ -63,7 +61,7 @@ class Player(PhysicsEntity):
       self.set_state(PlayerState.SPIN_STARTUP)
     elif self.spin_startup_frames <= self.spin_frame_count < self.spin_startup_frames + self.spin_frames:
       self.set_state(PlayerState.SPINNING)
-      if pygame.key.get_pressed()[pygame.K_y]: self.spin_frame_count = self.spin_startup_frames
+      # if pygame.key.get_pressed()[pygame.K_y]: self.spin_frame_count = self.spin_startup_frames
     elif self.spin_startup_frames + self.spin_frames <= self.spin_frame_count < self.spin_startup_frames + self.spin_frames + self.spin_cooldown_frames:
       self.set_state(PlayerState.SPIN_COOLDOWN)
     else:

@@ -6,8 +6,11 @@ import time
 
 from player import Player
 from tiles import TileMap
-from utils import Camera, MAP_TO_JSON, GameState
+from utils import Camera, MAP_TO_JSON, GameState, BASE_PIXEL_SCALE
 from enum import Enum, auto
+
+from entities import StaticEntity
+
 
 
 class CollisionType(Enum):
@@ -32,11 +35,25 @@ class Game:
     # init tilemap
     self.current_map = TileMap(tile_size=32, map_name='dev')
     
+    '''
+    GROUP ORDERING
+    ENTITIES [Player, All Entities]
+    BOUND [Player, All Boundaries from Tile Map] -> Will probably be [Entities, All Boundaries] once we've gotten enemies setup, we dont want them walking into shit
+    '''
     for offgrid_entity in self.current_map.off_grid_assets:
       self.entities.add(offgrid_entity)
+    
+    # parse dict to Static Entities at pixel_positions
+    for boundary_tile in self.current_map.get_boundary_tiles(): 
+      x_pos = boundary_tile[0] * self.current_map.tile_size - self.camera.scroll[0]
+      y_pos = boundary_tile[1] * self.current_map.tile_size - self.camera.scroll[1]
+
+      new_e = StaticEntity((x_pos, y_pos), (self.current_map.tile_size, self.current_map.tile_size), None)
+      self.boundaries.add(new_e)
 
   def init_entity_groups(self) -> None:
     self.entities = pygame.sprite.Group()
+    self.boundaries = pygame.sprite.Group()
 
   def set_state(self, new_state: GameState) -> None:
     if self.state != new_state:
@@ -46,6 +63,7 @@ class Game:
   def init_entities(self) -> None:
     self.player = Player((0, 0), (32, 32))
     self.entities.add(self.player)
+    self.boundaries.add(self.player)
 
   def handle_events(self) -> None:
     for event in pygame.event.get():

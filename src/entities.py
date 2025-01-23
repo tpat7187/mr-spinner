@@ -54,15 +54,16 @@ class PhysicsEntity(pygame.sprite.Sprite):
     self.collision(CollisionAxis.VERTICAL)
   
   def collision(self, type:CollisionAxis): 
-    for sp in self.groups()[0]:
-      if sp.rect.colliderect(self.rect) and sp != self: 
-        if type == CollisionAxis.HORIZONTAL:
-          if self.velocity.x > 0: self.rect.right = sp.rect.left
-          if self.velocity.x < 0: self.rect.left = sp.rect.right
+    for g in self.groups():
+      for sp in g:
+        if sp.rect.colliderect(self.rect) and sp != self: 
+          if type == CollisionAxis.HORIZONTAL:
+            if self.velocity.x > 0: self.rect.right = sp.rect.left
+            if self.velocity.x < 0: self.rect.left = sp.rect.right
 
-        if type == CollisionAxis.VERTICAL:
-          if self.velocity.y > 0: self.rect.bottom = sp.rect.top
-          if self.velocity.y < 0: self.rect.top = sp.rect.bottom
+          if type == CollisionAxis.VERTICAL:
+            if self.velocity.y > 0: self.rect.bottom = sp.rect.top
+            if self.velocity.y < 0: self.rect.top = sp.rect.bottom
   
   def set_state(self, new_state:Enum) -> str:
     if self.state != new_state:
@@ -78,6 +79,9 @@ class PhysicsEntity(pygame.sprite.Sprite):
     self.display_surface.blit(self.image, screen_pos)
 
 
+# thinking about detaching this from PhysicsEntity
+# The only thing we use this for is Collisions and Animation
+# The movement and directions are a waste of space
 class StaticEntity(PhysicsEntity): 
   def __init__(self, pos: Tuple[int, int], size: Optional[Tuple[int, int]]=None, asset:Optional[tmAsset]=None): 
     super().__init__(pos, size, asset)
