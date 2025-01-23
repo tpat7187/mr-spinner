@@ -69,9 +69,9 @@ class Player(DynamicEntity):
 
     self.spin_frame_count += 1
 
-
   def get_animation_direction(self, direction: pygame.Vector2) -> tuple:
-    if abs(direction.x) > abs(direction.y): return (1, 0) if direction.x > 0 else (-1, 0)
+    if abs(direction.x) > abs(direction.y): 
+      return (1, 0) if direction.x > 0 else (-1, 0)
     else: return (0, 1) if direction.y > 0 else (0, -1)
 
   def update(self, dt:float):

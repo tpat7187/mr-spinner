@@ -1,5 +1,6 @@
 import pygame
 from enum import Enum, auto
+from typing import Optional, Tuple
 from dataclasses import dataclass
 
 
@@ -12,7 +13,7 @@ MAP_TO_JSON = {
 }
 
 class GameState(Enum): PLAYING = auto(); PAUSED = auto(); MAP_EDITOR = auto(); INIT = auto();
-class AssetType(Enum): ON_GRID = auto(); OFF_GRID = auto();
+class AssetType(Enum): TileRend = auto(); EntityRend = auto(); 
 
 @dataclass
 class tmAsset:
@@ -25,12 +26,13 @@ class Camera:
     self.width, self.height = width, height
     self.scroll = pygame.math.Vector2(0,0)
   
-  def center_camera_on_target(self, target): 
+  def center_camera_on_target(self, target: pygame.Surface): 
     self.scroll.x = target.rect.centerx - self.width // 2
     self.scroll.y = target.rect.centery - self.height // 2    
 
 
-def load_image(path:str, pixel_scale=BASE_PIXEL_SCALE, scale:bool=True) -> pygame.Surface:
+# thinking about adding an explicit size to our image loader
+def load_image(path:str, pixel_scale=BASE_PIXEL_SCALE, scale:bool=True, size:Optional[Tuple[int, int]]=None) -> pygame.Surface:
   scale = pixel_scale if scale else 1
-  img = pygame.image.load(BASE_PATH + path).convert()
+  img = pygame.image.load(BASE_PATH + path).convert_alpha()
   return pygame.transform.scale(img, (img.get_width() * scale, img.get_height() * scale))

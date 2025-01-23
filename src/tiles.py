@@ -7,11 +7,11 @@ from entities import StaticEntity
 
 MAX_LAYERS = 3
 
-class TileMapState(Enum): DRAW = auto(); DELETE = auto();
+class TileMapState(Enum): DRAW_ON_GRID = auto(); DELETE = auto(); DRAW_OFF_GRID = auto();
 
 
 class TileMap:
-  def __init__(self, tile_size=31, map_name: Optional[str]=None):
+  def __init__(self, tile_size=32, map_name: Optional[str]=None):
     self.load_assets()
 
 
@@ -25,22 +25,37 @@ class TileMap:
     # For tile editor
     self.selected_tile_id = 1
     self.selected_layer = 1
-    self.state = TileMapState.DRAW
+    self.state = TileMapState.DRAW_ON_GRID
     self.game_state = GameState.PLAYING
+
+    self.to_entity_renderer = []
 
   def _init_map(self, map_name:Optional[str]=None) -> Tuple[Dict, List[StaticEntity]]: 
     if map_name: return self.load_map(MAP_TO_JSON[map_name])
     else: return ({'layer_1': {}, 'offgrid': {}, 'boundary': {}}, [])
+  
+  @property
+  def selected_asset_type(self): return self.tileIDtoTile[self.selected_tile_id].type
 
 
+  # AssetTypes
+  # TileRend : Render at Tile Map Rendering Time
+  # EntityRend : Render at Entity Rendering Time (Y Sorted)
+  # EntityRend Assets do NOT have collision physics
+  # Drawing Mode : Off Grid / On Grid
+
+  # Off Grid -> All drawn asses will be Entities With Collisions
+  # On Grid -> We need to place Collision boxes manually using the boundary layer
   def load_assets(self):
     self.tileIDtoTile = {
-      1: tmAsset(load_image('tilemaptest.png'), AssetType.ON_GRID, 1),
-      2: tmAsset(load_image('redtile.png'), AssetType.ON_GRID, 2),
-      3: tmAsset(load_image('../assets/danyaseethe.png', scale=False), AssetType.OFF_GRID, 3)
+      1: tmAsset(load_image('tilemaptest.png'), AssetType.TileRend, 1),
+      2: tmAsset(load_image('redtile.png'), AssetType.TileRend, 2),
+      3: tmAsset(load_image('danyaseethe.png', scale=False), AssetType.EntityRend, 3),
+      4: tmAsset(load_image('passthrutest.png', scale=True), AssetType.EntityRend, 4)
     }
 
 
+  # TODO: do we still want boundary edit ops to happen during runtime
   def event_handler(self, event: pygame.event.Event, camera_scroll: Tuple[int,int]) -> Optional[dict]:
     result = {'spawned_entity': None,
               'added_boundary' : None,
@@ -51,31 +66,30 @@ class TileMap:
       if event.key == pygame.K_a: self.cycle_tiles()
       elif event.key == pygame.K_d: self.cycle_layers()
       elif event.key == pygame.K_f:
-        if self.state == TileMapState.DRAW: self.set_state(TileMapState.DELETE)
-        elif self.state == TileMapState.DELETE: self.set_state(TileMapState.DRAW)
+        if self.state == TileMapState.DRAW_ON_GRID: self.set_state(TileMapState.DELETE)
+        elif self.state == TileMapState.DELETE: self.set_state(TileMapState.DRAW_OFF_GRID)
+        elif self.state == TileMapState.DRAW_OFF_GRID: self.set_state(TileMapState.DRAW_ON_GRID)
       elif event.key == pygame.K_e: 
         if self.selected_layer != 'Boundary': self.selected_layer = 'Boundary'
         elif self.selected_layer == 'Boundary': self.selected_layer = 1
 
     # Check for mouse press
     if pygame.mouse.get_pressed()[0]:
-      if self.state == TileMapState.DRAW:
+      if self.state in (TileMapState.DRAW_ON_GRID, TileMapState.DRAW_OFF_GRID):
         newly_spawned = self.place_tile_at_mouse_position(camera_scroll)
-        if newly_spawned: 
-          if type(newly_spawned == StaticEntity): 
-            result['spawned_entity'] = newly_spawned
+        if newly_spawned: result['spawned_entity'] = newly_spawned
+
       elif self.state == TileMapState.DELETE:
         removed = self.delete_tile_at_mouse_position(camera_scroll)
-        if removed: 
-          if type(removed == StaticEntity): 
-            result['removed_entity'] = removed
+        if removed: result['removed_entity'] = removed
 
     # return None if no entities were spaned
     if all(result.values()) is None: return None
     return result
 
   @property
-  def layer_k(self) -> str: return f"layer_{self.selected_layer}"
+  def layer_k(self) -> str: 
+      return f"layer_{self.selected_layer}" if self.selected_layer != "Boundary" else 'boundary'
 
   @property
   def selected_asset(self) -> tmAsset: return self.tileIDtoTile[self.selected_tile_id]
@@ -120,6 +134,8 @@ class TileMap:
           tile_surf.fill((255, 0, 0))
 
           self.display_surface.blit(tile_surf, (screen_x, screen_y))
+  
+    return self.to_entity_renderer
 
   def mouse_position_to_tile(self, camera_scroll):
     m_x, m_y = self.mouse_position(camera_scroll)
@@ -143,21 +159,33 @@ class TileMap:
       return self.selected_layer
 
   def set_state(self, state: TileMapState):
-    if self.state != state:
-      self.state = state
+    if self.state != state: self.state = state
 
   def place_tile_at_mouse_position(self, camera_scroll) -> Optional[StaticEntity]:
-    if self.selected_asset.type == AssetType.OFF_GRID:
-      mouse_position = self.mouse_position(camera_scroll)
-      new_e = StaticEntity(mouse_position, asset=self.selected_asset)
+    m_p = self.mouse_position(camera_scroll) if self.state == TileMapState.DRAW_OFF_GRID else self.mouse_position_to_tile(camera_scroll)
+
+    if self.selected_layer == 'Boundary':
+      self.maps[self.layer_k][m_p] = 0
+
+    if self.state == TileMapState.DRAW_OFF_GRID:
+      new_e = StaticEntity(m_p, asset=self.selected_asset)
       self.off_grid_assets.append(new_e)
-      self.maps['offgrid'][mouse_position] = self.selected_asset.id
+      self.maps['offgrid'][m_p] = self.selected_asset.id
       return new_e
+    
+    if self.selected_asset_type == AssetType.EntityRend:
+      # this should be a part of off_grid assets but shouldnt be colliding with the player
+      n_p = (m_p[0] * self.tile_size, m_p[1] * self.tile_size)
+      new_e = StaticEntity(n_p, asset=self.selected_asset)
+      self.to_entity_renderer.append(new_e)
+      self.maps[self.layer_k][n_p] = self.selected_tile_id if self.selected_layer != 'Boundary' else 0 
+    
     else:
-      layer_key = self.layer_k if self.selected_layer != 'Boundary' else 'boundary'
-      tile_position = self.mouse_position_to_tile(camera_scroll)
-      self.maps[layer_key][tile_position] = self.selected_tile_id if self.selected_layer != 'Boundary' else 0 
+      self.maps[self.layer_k][m_p] = self.selected_tile_id
+
     return None
+    
+    
   
   def get_boundary_tiles(self): return self.maps['boundary']
 
@@ -193,6 +221,7 @@ class TileMap:
       json.dump(dict_to_save, f, indent=2)
 
   def load_map(self, map_path):
+    # TODO: pass AssetType.Entities on grid to the entity renderer
     with open(map_path, 'r') as f:
       json_data = json.load(f)
 

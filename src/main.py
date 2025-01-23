@@ -52,8 +52,15 @@ class Game:
       self.boundaries.add(new_e)
 
   def init_entity_groups(self) -> None:
+    # player // collidable dynamic/static sprites
     self.entities = pygame.sprite.Group()
+
+    # player // collodable dynamic/static sprites (?) // boundary tiles
     self.boundaries = pygame.sprite.Group()
+
+    # player // collidable dynamic/static sprites // non collidable dynamic/static sprites
+    # idk if we will ever use this
+    self.all_sprites = pygame.sprite.Group()
 
   def set_state(self, new_state: GameState) -> None:
     if self.state != new_state:
@@ -100,16 +107,17 @@ class Game:
     self.screen.fill((0, 0, 0))
 
     # 1) Render Tilemap
-    self.current_map.render([self.camera.scroll.x, self.camera.scroll.y], self.camera.width, self.camera.height)
+    e_from_tm = self.current_map.render([self.camera.scroll.x, self.camera.scroll.y], self.camera.width, self.camera.height)
 
     # 2) Render y-sorted entities
-    for sprite in sorted(self.entities, key=lambda s: s.rect.bottom):
+    # remove group thing
+    for sprite in sorted([*self.entities.sprites(), *e_from_tm], key=lambda s: s.rect.bottom):
       sprite.render(self.camera.scroll)
 
     # 3) Render UI
     fps_t = 1 / self.dt if self.dt else 0
     pygame.font.init()
-    my_font = pygame.font.SysFont('Times New Roman', 13)
+    my_font = pygame.font.SysFont('Times New Roman', 15)
     text_surface = my_font.render(
       f"FPS: <{int(fps_t)}>\n"
       f"Mouse Tile Position: <{self.current_map.mouse_position_to_tile(self.camera.scroll)}>\n"
@@ -128,6 +136,7 @@ class Game:
     # If in MAP_EDITOR, show tile selection info
     if self.state == GameState.MAP_EDITOR:
       map_editor_ui = my_font.render(
+        f"CHANGE TILE: [A], CHANGE LAYER: [D], CHANGE OPERATION [F], BOUNDARY MODE [E]\n"
         f"selected tile: {self.current_map.selected_tile_id}\n"
         f"selected layer: {self.current_map.selected_layer}\n"
         f"editor state: {self.current_map.state}",

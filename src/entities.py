@@ -24,6 +24,7 @@ PhysicsProc: Handles Collisions
 '''
 
 class CollisionProc:
+  __slots__ = "entity"
   def __init__(self, entity: 'DynamicEntity'):
     self.entity = entity
   
@@ -42,6 +43,7 @@ class CollisionProc:
       if self.entity.velocity.y < 0: self.entity.rect.top = other.rect.bottom
 
 class RenderProc:
+  __slots__ = "image", "anim_offset", "display_surface"
   def __init__(self, image: pygame.Surface, anim_offset: Tuple[int, int] = (0, 0)):
     self.image = image
     self.anim_offset = anim_offset
