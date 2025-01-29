@@ -2,11 +2,23 @@ from __future__ import annotations
 from typing import Tuple, Optional
 import pygame
 
-from entities import DynamicEntity
+from entities import DynamicEntity, HitboxProc
 from animation import Animation
 from enum import Enum, auto
 
 class PlayerState(Enum): IDLE = auto(); MOVING = auto(); SPIN_STARTUP = auto(); SPINNING = auto(); SPIN_COOLDOWN = auto();
+
+# TODO: write this as an extention of HitboxProc
+class SpinningHBProc(HitboxProc): 
+  def __init__(self, owner, offset, lifetime): 
+    super().__init__(owner, offset, lifetime)
+    pass
+
+
+  def update(self): 
+    pass
+    # this will rotate
+
 
 class Player(DynamicEntity): 
   def __init__(self, pos: Tuple[int, int], size: Tuple[int, int]):
@@ -19,8 +31,10 @@ class Player(DynamicEntity):
     self.spinning = False
     self.spin_frame_count = 0
     self.spin_startup_frames = 100
-    self.spin_frames = 150
+    self.spin_frames = 20
     self.spin_cooldown_frames = 100
+
+    self.active_hb.append(HitboxProc(self, (0, 0), (10,50), 100))
 
     # load assets [state, animation]
     self.assets = {
@@ -60,7 +74,7 @@ class Player(DynamicEntity):
       self.set_state(PlayerState.SPIN_STARTUP)
     elif self.spin_startup_frames <= self.spin_frame_count < self.spin_startup_frames + self.spin_frames:
       self.set_state(PlayerState.SPINNING)
-      # if pygame.key.get_pressed()[pygame.K_y]: self.spin_frame_count = self.spin_startup_frames
+      if pygame.key.get_pressed()[pygame.K_y]: self.spin_frame_count = self.spin_startup_frames
     elif self.spin_startup_frames + self.spin_frames <= self.spin_frame_count < self.spin_startup_frames + self.spin_frames + self.spin_cooldown_frames:
       self.set_state(PlayerState.SPIN_COOLDOWN)
     else:
@@ -68,12 +82,15 @@ class Player(DynamicEntity):
       self.spinning = False
 
     self.spin_frame_count += 1
+  
+  def create_hb(self): 
+    self.active_hb.append(HitboxProc(self, (0, 0), (25,25), 100))
 
   def get_animation_direction(self, direction: pygame.Vector2) -> tuple:
     if abs(direction.x) > abs(direction.y): 
       return (1, 0) if direction.x > 0 else (-1, 0)
     else: return (0, 1) if direction.y > 0 else (0, -1)
-
+  
   def update(self, dt:float):
 
     self.direction = self.get_input_direction()
@@ -93,6 +110,8 @@ class Player(DynamicEntity):
         self.set_state(PlayerState.IDLE)
 
     # new state first, anim once we know our new state
+    for hb in self.active_hb: 
+      hb.update()
 
     if not self.spinning:
       self.anim = self.assets[self.state][self.get_animation_direction(self.idle_direction)]

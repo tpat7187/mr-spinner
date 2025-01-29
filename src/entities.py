@@ -1,10 +1,11 @@
 from __future__ import annotations
 from typing import Tuple, Optional
-from utils import load_image, tmAsset
+from utils import load_image, tmAsset, DEBUG
 import pygame
 
 from animation import Animation
 from enum import Enum, auto
+import math
 
 
 class CollisionAxis(Enum): HORIZONTAL = auto(); VERTICAL = auto();
@@ -56,6 +57,38 @@ class RenderProc:
     )
     self.display_surface.blit(self.image, screen_pos)
 
+# HITBOXES HAVE TO BE SURFACES SO WE CAN ROTATE THEM
+# TODO: refactor more, take the spinny parts and put it in the SpinningHBProc in player
+# make more general so we can use these for enemies n shit too
+# I dont think for spinning the hitbox needs to rotate, I think it can just 'orbit' the player at an offset
+class HitboxProc: 
+  def __init__(self, owner: Entity, offset: Tuple[int, int], size: Tuple[int, int], lifetime: int):
+    self.owner = owner
+    self.offset, self.size, self.lifetime = offset, size, lifetime
+    self.surf_orig = pygame.Surface(size, pygame.SRCALPHA)  
+    self.surf_orig.fill((255, 0, 0, 128))  
+    self.rect = self.surf_orig.get_rect()
+    self.original_offset = pygame.math.Vector2(offset)
+    
+    # rotation shit
+    self.rot = 0  
+    self.rot_speed = 3
+    self.radius = math.sqrt(offset[0]**2 + offset[1]**2)
+    
+    # Current surface that will be rotated
+    self.current_surface = self.surf_orig
+    
+  def update(self):
+    # update rot pos
+    self.rot = (self.rot + self.rot_speed) % 360
+    
+    # spinning
+    self.current_surface = pygame.transform.rotate(self.surf_orig, self.rot)
+    self.rect = self.current_surface.get_rect()
+    
+    # update pos, center on owner
+    self.rect.center = self.owner.rect.center
+
 
 class Entity(pygame.sprite.Sprite): 
   def __init__(self, pos: Tuple[int, int], size: Optional[Tuple[int, int]]=None, asset:Optional[tmAsset]=None): 
@@ -71,6 +104,12 @@ class Entity(pygame.sprite.Sprite):
 
   @property
   def get_asset_id(self): return self.asset.id
+
+  @property
+  def x(self): return self.rect.x
+
+  @property
+  def y(self): return self.rect.y
 
   def _create_default_surface(self, size: Tuple[int, int]) -> pygame.Surface:
     surface = pygame.Surface(size)
@@ -108,6 +147,8 @@ class DynamicEntity(Entity):
     self.anim = None
     self.anim_offset = [0, 0]
 
+    self.active_hb = []
+
     # passing in reference to velocity for now
     self.phys = CollisionProc(self)
     self.renderer = RenderProc(self.image, self.anim_offset)
@@ -121,5 +162,15 @@ class DynamicEntity(Entity):
 
   def render(self, camera_scroll:pygame.Vector2): 
     self.renderer.render(self.get_pos, camera_scroll)
+
+    # if you want to render the hitboxes
+    if len(self.active_hb) > 0: 
+      for hitbox in self.active_hb: 
+        screen_pos = (
+          hitbox.rect.x - camera_scroll[0] - self.anim_offset[0],
+          hitbox.rect.y - camera_scroll[1] - self.anim_offset[1]
+        )
+        self.display_surface.blit(hitbox.current_surface, screen_pos)
+
 
 

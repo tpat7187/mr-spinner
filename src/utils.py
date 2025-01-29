@@ -1,4 +1,5 @@
 import pygame
+import os
 from enum import Enum, auto
 from typing import Optional, Tuple
 from dataclasses import dataclass
@@ -11,6 +12,9 @@ BASE_PIXEL_SCALE = 2
 MAP_TO_JSON = { 
   'dev' : BASE_PATH + 'maps/map_data.json'
 }
+
+# this doesnt work on windows. SAD!
+DEBUG = os.getenv("DEBUG", 0)
 
 class GameState(Enum): PLAYING = auto(); PAUSED = auto(); MAP_EDITOR = auto(); INIT = auto();
 class AssetType(Enum): TileRend = auto(); EntityRend = auto(); 
