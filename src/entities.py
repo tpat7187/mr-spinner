@@ -61,33 +61,25 @@ class RenderProc:
 # TODO: refactor more, take the spinny parts and put it in the SpinningHBProc in player
 # make more general so we can use these for enemies n shit too
 # I dont think for spinning the hitbox needs to rotate, I think it can just 'orbit' the player at an offset
+
 class HitboxProc: 
-  def __init__(self, owner: Entity, offset: Tuple[int, int], size: Tuple[int, int], lifetime: int):
+  def __init__(self, owner: Entity, offset: Tuple[int, int], size: Tuple[int, int], lifetime: int): 
     self.owner = owner
     self.offset, self.size, self.lifetime = offset, size, lifetime
-    self.surf_orig = pygame.Surface(size, pygame.SRCALPHA)  
-    self.surf_orig.fill((255, 0, 0, 128))  
-    self.rect = self.surf_orig.get_rect()
-    self.original_offset = pygame.math.Vector2(offset)
-    
-    # rotation shit
-    self.rot = 0  
-    self.rot_speed = 3
-    self.radius = math.sqrt(offset[0]**2 + offset[1]**2)
-    
-    # Current surface that will be rotated
-    self.current_surface = self.surf_orig
-    
-  def update(self):
-    # update rot pos
-    self.rot = (self.rot + self.rot_speed) % 360
-    
-    # spinning
-    self.current_surface = pygame.transform.rotate(self.surf_orig, self.rot)
-    self.rect = self.current_surface.get_rect()
-    
-    # update pos, center on owner
-    self.rect.center = self.owner.rect.center
+
+    self.surface_hb = pygame.Surface(size, pygame.SRCALPHA)
+    self.surface_hb.fill((255, 0, 0, 128))
+    self.hb = self.surface_hb.get_rect()
+    self.hb.center = owner.rect.center
+
+  def update(self): 
+    pass
+
+  @property
+  def x(self): return self.hb.x
+
+  @property
+  def y(self): return self.hb.y
 
 
 class Entity(pygame.sprite.Sprite): 
@@ -110,6 +102,12 @@ class Entity(pygame.sprite.Sprite):
 
   @property
   def y(self): return self.rect.y
+
+  @property
+  def center_x(self): return self.rect.x + (self.rect.width / 2)
+
+  @property
+  def center_y(self): return self.rect.y + (self.rect.height / 2)
 
   def _create_default_surface(self, size: Tuple[int, int]) -> pygame.Surface:
     surface = pygame.Surface(size)
@@ -167,10 +165,10 @@ class DynamicEntity(Entity):
     if len(self.active_hb) > 0: 
       for hitbox in self.active_hb: 
         screen_pos = (
-          hitbox.rect.x - camera_scroll[0] - self.anim_offset[0],
-          hitbox.rect.y - camera_scroll[1] - self.anim_offset[1]
+          hitbox.x - camera_scroll[0] - self.anim_offset[0],
+          hitbox.y - camera_scroll[1] - self.anim_offset[1]
         )
-        self.display_surface.blit(hitbox.current_surface, screen_pos)
+        self.display_surface.blit(hitbox.surface_hb, screen_pos)
 
 
 

@@ -1,24 +1,54 @@
 from __future__ import annotations
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict
 import pygame
 
-from entities import DynamicEntity, HitboxProc
+from entities import DynamicEntity, HitboxProc, Entity
 from animation import Animation
 from enum import Enum, auto
+import math
 
 class PlayerState(Enum): IDLE = auto(); MOVING = auto(); SPIN_STARTUP = auto(); SPINNING = auto(); SPIN_COOLDOWN = auto();
 
 # TODO: write this as an extention of HitboxProc
 class SpinningHBProc(HitboxProc): 
-  def __init__(self, owner, offset, lifetime): 
-    super().__init__(owner, offset, lifetime)
-    pass
+  def __init__(self, owner: Entity, offset: Tuple[int, int], size: Tuple[int, int], lifetime: int): 
+    super().__init__(owner, offset, size, lifetime)
+    self.radius = 50
+    self.angle = math.radians(270) # Track actual angle in radians
+    self.rot_speed = 0.05
 
+    self.anim_schedule: Dict[int, Tuple[float, float]] = { 
+      1 : (100, 100),
+      2 : (200, 100),
+      3 : (300, 100),
+      4 : (400, 100)
+    }
 
   def update(self): 
-    pass
-    # this will rotate
+    owner_center_x = self.owner.x + self.owner.rect.width // 2
+    owner_center_y = self.owner.y + self.owner.rect.height // 2
 
+    # Update angle in radians
+    self.angle = (self.angle + self.rot_speed) % (2 * math.pi)
+
+    x_t = self.radius * math.cos(-self.angle)
+    y_t = self.radius * math.sin(-self.angle)
+
+    self.hb.centerx = owner_center_x + x_t
+    self.hb.centery = owner_center_y + y_t
+  
+  # gives anim_frame, returns position of hitbox
+  def update_from_schedule(self, current_frame): 
+    if current_frame in self.anim_schedule:
+      new_pos = self.anim_schedule[current_frame]
+      owner_center_x = self.owner.x + self.owner.rect.width // 2
+      owner_center_y = self.owner.y + self.owner.rect.height // 2
+
+      self.hb.x = owner_center_x + new_pos[0]
+      self.hb.y = owner_center_y + new_pos[1]
+
+  @property
+  def orbital_angle(self) -> float: return math.degrees(self.angle) % 360
 
 class Player(DynamicEntity): 
   def __init__(self, pos: Tuple[int, int], size: Tuple[int, int]):
@@ -31,10 +61,10 @@ class Player(DynamicEntity):
     self.spinning = False
     self.spin_frame_count = 0
     self.spin_startup_frames = 100
-    self.spin_frames = 20
+    self.spin_frames = 250
     self.spin_cooldown_frames = 100
 
-    self.active_hb.append(HitboxProc(self, (0, 0), (10,50), 100))
+    self.active_hb.append(SpinningHBProc(self, (0, 0), (25,25), 100))
 
     # load assets [state, animation]
     self.assets = {
@@ -67,6 +97,10 @@ class Player(DynamicEntity):
     if direction.magnitude() > 0:
       return direction.normalize()
     return direction
+  
+  @property
+  def current_anim_frame(self): return self.anim.current_frame
+  
   
   def spin_handler(self): 
     self.spinning = True
@@ -110,14 +144,17 @@ class Player(DynamicEntity):
         self.set_state(PlayerState.IDLE)
 
     # new state first, anim once we know our new state
-    for hb in self.active_hb: 
-      hb.update()
 
     if not self.spinning:
       self.anim = self.assets[self.state][self.get_animation_direction(self.idle_direction)]
     else:
       self.anim = self.assets[self.state]
 
+    if self.spinning:
+      self.current_frame = self.anim.current_frame
+      for hb in self.active_hb: 
+        hb.update_from_schedule(self.current_frame)
+    
     self.anim.update()
     self.renderer.image, self.renderer.anim_offset = self.anim.get_img()
     self.update_physics(dt)

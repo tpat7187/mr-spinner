@@ -10,8 +10,10 @@ class Animation:
     self.loop = loop
     self.hitbox_width, self.hitbox_height = hit_box_size
 
+
     # start / end animation image
     self.st, self.ed = st, ed if ed is not None else columns
+    self.current_frame = st
 
     self.sheet = load_image(self.sprite_sheet_path, BASE_PIXEL_SCALE)
 
@@ -39,7 +41,8 @@ class Animation:
     self.game_frame = self.st * self.animation_frame_duration
   
   def get_img(self): 
-    current_frame = self.game_frame // self.animation_frame_duration
+    current_frame = int(self.game_frame // self.animation_frame_duration)
+    self.current_frame = current_frame
     # all animations were offset by 1 since current_frame * self.frame_width would not start at 0 pixels
     frame_x = (current_frame - 1) * self.frame_width
     frame_y = 0  # TODO: update when we have more complicated sprite sheets
@@ -47,6 +50,5 @@ class Animation:
     # Create full-size surface for the animation frame
     frame_surface = pygame.Surface((self.frame_width, self.frame_height), pygame.SRCALPHA)
     frame_surface.blit(self.sheet, (0, 0), (frame_x, frame_y, self.frame_width, self.frame_height))
-    frame_surface.set_colorkey((0, 0, 0))
     
     return frame_surface, (self.x_offset, self.y_offset)
