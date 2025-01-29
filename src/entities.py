@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List, Dict
 from utils import load_image, tmAsset, DEBUG
 import pygame
 
@@ -120,13 +120,15 @@ class Entity(pygame.sprite.Sprite):
       self.state = new_state
 
 class StaticEntity(Entity):
+  phys: CollisionProc
+  renderer: RenderProc
   def __init__(self, pos: Tuple[int, int], size: Optional[Tuple[int, int]] = None, asset: Optional[tmAsset] = None):
     super().__init__(pos, size, asset)
     self.state = None
 
-    self.assets = None
-    self.anim = None
-    self.anim_offset = [0, 0]
+    self.assets: Dict[int, Animation] = None
+    self.anim: Animation = None
+    self.anim_offset: Tuple[int, int] = [0, 0]
 
     self.phys = CollisionProc(self)
     self.renderer = RenderProc(self.image, self.anim_offset)
@@ -135,17 +137,19 @@ class StaticEntity(Entity):
     self.renderer.render(self.get_pos, camera_scroll)
 
 class DynamicEntity(Entity):
+  phys: CollisionProc
+  renderer: RenderProc
   def __init__(self, pos: Tuple[int, int], size: Optional[Tuple[int, int]] = None, asset: Optional[tmAsset] = None):
     super().__init__(pos, size, asset)
     self.velocity = pygame.math.Vector2(0, 0)
     self.direction = pygame.math.Vector2(0, 1)
     self.state = None
 
-    self.assets = None
-    self.anim = None
-    self.anim_offset = [0, 0]
+    self.assets: Dict[int, Animation] = None
+    self.anim: Animation = None
+    self.anim_offset: Tuple[int, int] = [0, 0]
 
-    self.active_hb = []
+    self.active_hb: List[HitboxProc] = []
 
     # passing in reference to velocity for now
     self.phys = CollisionProc(self)

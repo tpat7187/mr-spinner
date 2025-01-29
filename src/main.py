@@ -118,11 +118,13 @@ class Game:
     fps_t = 1 / self.dt if self.dt else 0
     pygame.font.init()
     my_font = pygame.font.SysFont('Times New Roman', 15)
+    mp_x, mp_y = pygame.mouse.get_pos()
     text_surface = my_font.render(
       f"FPS: <{int(fps_t)}>\n"
       f"Mouse Tile Position: <{self.current_map.mouse_position_to_tile(self.camera.scroll)}>\n"
       f"State: {self.player.state}\n"
       f"Direction: {self.player.direction}\n"
+      f"Pixel Offset from Player:{mp_x + self.camera.scroll.x - self.player.x},{mp_y + self.camera.scroll.y - self.player.y}\n"
       f"Game State: {self.state}", 
       False, (255, 255, 255)
     )

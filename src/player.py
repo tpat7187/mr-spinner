@@ -18,34 +18,23 @@ class SpinningHBProc(HitboxProc):
     self.rot_speed = 0.05
 
     self.anim_schedule: Dict[int, Tuple[float, float]] = { 
-      1 : (100, 100),
-      2 : (200, 100),
-      3 : (300, 100),
-      4 : (400, 100)
+      8 : (-5, 92),
+      9 : (89, 0),
+      10 : (-7, -78),
+      11 : (-57, 20),
+      12 : (-5, 92),
+      13 : (89, 0),
+      14 : (-7, -78),
+      15 : (-57, 20)
     }
-
-  def update(self): 
-    owner_center_x = self.owner.x + self.owner.rect.width // 2
-    owner_center_y = self.owner.y + self.owner.rect.height // 2
-
-    # Update angle in radians
-    self.angle = (self.angle + self.rot_speed) % (2 * math.pi)
-
-    x_t = self.radius * math.cos(-self.angle)
-    y_t = self.radius * math.sin(-self.angle)
-
-    self.hb.centerx = owner_center_x + x_t
-    self.hb.centery = owner_center_y + y_t
   
   # gives anim_frame, returns position of hitbox
-  def update_from_schedule(self, current_frame): 
+  def update(self, current_frame): 
     if current_frame in self.anim_schedule:
       new_pos = self.anim_schedule[current_frame]
-      owner_center_x = self.owner.x + self.owner.rect.width // 2
-      owner_center_y = self.owner.y + self.owner.rect.height // 2
 
-      self.hb.x = owner_center_x + new_pos[0]
-      self.hb.y = owner_center_y + new_pos[1]
+      self.hb.x = self.owner.x + new_pos[0]
+      self.hb.y = self.owner.y + new_pos[1]
 
   @property
   def orbital_angle(self) -> float: return math.degrees(self.angle) % 360
@@ -61,11 +50,12 @@ class Player(DynamicEntity):
     self.spinning = False
     self.spin_frame_count = 0
     self.spin_startup_frames = 100
-    self.spin_frames = 250
+    self.spin_frames = 50
     self.spin_cooldown_frames = 100
 
     self.active_hb.append(SpinningHBProc(self, (0, 0), (25,25), 100))
 
+    self.current_frame = None
     # load assets [state, animation]
     self.assets = {
       PlayerState.IDLE: {
@@ -150,12 +140,12 @@ class Player(DynamicEntity):
     else:
       self.anim = self.assets[self.state]
 
-    if self.spinning:
-      self.current_frame = self.anim.current_frame
-      for hb in self.active_hb: 
-        hb.update_from_schedule(self.current_frame)
-    
+    # Update Animation
     self.anim.update()
     self.renderer.image, self.renderer.anim_offset = self.anim.get_img()
     self.update_physics(dt)
+
+    if self.current_frame != self.anim.current_frame:
+      self.current_frame = self.anim.current_frame
+      for hb in self.active_hb: hb.update(self.current_frame)
   
