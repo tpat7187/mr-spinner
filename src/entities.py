@@ -30,8 +30,8 @@ class CollisionProc:
     self.entity = entity
   
   def check_collision(self, entity_groups, axis: CollisionAxis):
-    for group in entity_groups:
-      for sprite in group:
+    if entity_groups is not None:
+      for sprite in list(entity_groups):
         if sprite.rect.colliderect(self.entity.rect) and sprite != self.entity:
           self.handle_collision(sprite, axis)
   
@@ -118,6 +118,13 @@ class Entity(pygame.sprite.Sprite):
     if self.state != new_state:
       if self.anim: self.anim.reset()
       self.state = new_state
+  
+  # tile size = 32, pixel scaling = 3
+  def tile_position(self):
+    p_tile_x = int(self.rect.centerx // (32 * 2))
+    p_tile_y = int(self.rect.centery // (32 * 2))
+    return (p_tile_x, p_tile_y)
+
 
 class StaticEntity(Entity):
   phys: CollisionProc
@@ -154,13 +161,43 @@ class DynamicEntity(Entity):
     # passing in reference to velocity for now
     self.phys = CollisionProc(self)
     self.renderer = RenderProc(self.image, self.anim_offset)
+
+    self.boundary = ()
   
-  def update_physics(self, dt: float):
+  def tile_pos(self, px_pos): 
+    return int(px_pos // (32 * 2))
+  
+  def update_physics(self, dt: float, boundary_dict):
+
+    old_x = self.rect.centerx
     self.rect.x += self.velocity.x * dt
-    self.phys.check_collision(self.groups(), CollisionAxis.HORIZONTAL)
+    if self.tile_pos(old_x) != self.tile_pos(self.rect.centerx):
+      self.boundary =self.get_nearby_tiles_for_CProc(boundary_dict, 2)
+
+    self.phys.check_collision(self.boundary, CollisionAxis.HORIZONTAL)
     
+    old_y = self.rect.centery
     self.rect.y += self.velocity.y * dt
-    self.phys.check_collision(self.groups(), CollisionAxis.VERTICAL)
+    if self.tile_pos(old_y) != self.tile_pos(self.rect.centery):
+      self.boundary = self.get_nearby_tiles_for_CProc(boundary_dict, 2)
+
+    self.phys.check_collision(self.boundary, CollisionAxis.VERTICAL)
+
+  # tile area around the player
+  # should only be called when the player changes tile position
+  def get_nearby_tiles_for_CProc(self, boundary_dict, rad): 
+    p_x, p_y = self.tile_position()
+    boundary = set()
+    for i in range(p_x - rad, p_x + rad, 1): 
+      for j in range(p_y - rad, p_y + rad, 1): 
+        if (i,j) in boundary_dict.keys():
+          boundary.add(boundary_dict[(i,j)])
+    return boundary
+    
+    # loop through each tile coordinate round player
+    # if that coordinate exists in the tilemap boundary dict
+    # add to entities collision group
+    # collision group gets called on update_physics
 
   def render(self, camera_scroll:pygame.Vector2): 
     self.renderer.render(self.get_pos, camera_scroll)

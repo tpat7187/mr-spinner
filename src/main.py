@@ -43,6 +43,7 @@ class Game:
     for offgrid_entity in self.current_map.off_grid_assets:
       self.entities.add(offgrid_entity)
     
+    self.boundary_dict = {} 
     # parse dict to Static Entities at pixel_positions
     for boundary_tile in self.current_map.get_boundary_tiles(): 
       x_pos = boundary_tile[0] * self.current_map.tile_size - self.camera.scroll[0]
@@ -50,6 +51,9 @@ class Game:
 
       new_e = StaticEntity((x_pos, y_pos), (self.current_map.tile_size, self.current_map.tile_size), None)
       self.boundaries.add(new_e)
+
+      self.boundary_dict[boundary_tile[0], boundary_tile[1]] = new_e
+
 
   def init_entity_groups(self) -> None:
     # player // collidable dynamic/static sprites
@@ -100,7 +104,7 @@ class Game:
 
   def update(self, dt: float) -> None:
     if self.state == GameState.PLAYING:
-      self.entities.update(dt)
+      self.entities.update(dt, self.boundary_dict)
       self.camera.center_camera_on_target(self.player)
 
   def render(self) -> None:
@@ -125,6 +129,7 @@ class Game:
       f"State: {self.player.state}\n"
       f"Direction: {self.player.direction}\n"
       f"Pixel Offset from Player:{mp_x + self.camera.scroll.x - self.player.x},{mp_y + self.camera.scroll.y - self.player.y}\n"
+      f"Tile Position:{self.player.tile_position()}\n"
       f"Game State: {self.state}", 
       False, (255, 255, 255)
     )

@@ -115,7 +115,7 @@ class Player(DynamicEntity):
       return (1, 0) if direction.x > 0 else (-1, 0)
     else: return (0, 1) if direction.y > 0 else (0, -1)
   
-  def update(self, dt:float):
+  def update(self, dt:float, boundary_dict):
 
     self.direction = self.get_input_direction()
     is_moving = self.direction.magnitude() > 0
@@ -143,7 +143,7 @@ class Player(DynamicEntity):
     # Update Animation
     self.anim.update()
     self.renderer.image, self.renderer.anim_offset = self.anim.get_img()
-    self.update_physics(dt)
+    self.update_physics(dt, boundary_dict)
 
     if self.current_frame != self.anim.current_frame:
       self.current_frame = self.anim.current_frame
