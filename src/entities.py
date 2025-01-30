@@ -63,23 +63,30 @@ class RenderProc:
 # I dont think for spinning the hitbox needs to rotate, I think it can just 'orbit' the player at an offset
 
 class HitboxProc: 
-  def __init__(self, owner: Entity, offset: Tuple[int, int], size: Tuple[int, int], lifetime: int): 
-    self.owner = owner
-    self.offset, self.size, self.lifetime = offset, size, lifetime
+  __slots__ = "owner", "lifetime" 
+  def __init__(self, owner: Entity, size: Tuple[int, int], lifetime: int): 
+    self.owner, self.lifetime = owner, lifetime
 
     self.surface_hb = pygame.Surface(size, pygame.SRCALPHA)
     self.surface_hb.fill((255, 0, 0, 128))
     self.hb = self.surface_hb.get_rect()
     self.hb.center = owner.rect.center
 
-  def update(self): 
-    pass
+    self.anim_schedule:Dict[int, Tuple[int, int]]
 
   @property
   def x(self): return self.hb.x
 
   @property
   def y(self): return self.hb.y
+
+  # gives anim_frame, returns position of hitbox
+  def update(self, current_frame): 
+    if current_frame in self.anim_schedule:
+      new_pos = self.anim_schedule[current_frame]
+
+      self.hb.x = self.owner.x + new_pos[0]
+      self.hb.y = self.owner.y + new_pos[1]
 
 
 class Entity(pygame.sprite.Sprite): 

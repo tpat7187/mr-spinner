@@ -9,13 +9,9 @@ import math
 
 class PlayerState(Enum): IDLE = auto(); MOVING = auto(); SPIN_STARTUP = auto(); SPINNING = auto(); SPIN_COOLDOWN = auto();
 
-# TODO: write this as an extention of HitboxProc
 class SpinningHBProc(HitboxProc): 
-  def __init__(self, owner: Entity, offset: Tuple[int, int], size: Tuple[int, int], lifetime: int): 
-    super().__init__(owner, offset, size, lifetime)
-    self.radius = 50
-    self.angle = math.radians(270) # Track actual angle in radians
-    self.rot_speed = 0.05
+  def __init__(self, owner: Entity, size: Tuple[int, int], lifetime: int): 
+    super().__init__(owner, size, lifetime)
 
     self.anim_schedule: Dict[int, Tuple[float, float]] = { 
       8 : (-5, 92),
@@ -27,14 +23,6 @@ class SpinningHBProc(HitboxProc):
       14 : (-7, -78),
       15 : (-57, 20)
     }
-  
-  # gives anim_frame, returns position of hitbox
-  def update(self, current_frame): 
-    if current_frame in self.anim_schedule:
-      new_pos = self.anim_schedule[current_frame]
-
-      self.hb.x = self.owner.x + new_pos[0]
-      self.hb.y = self.owner.y + new_pos[1]
 
   @property
   def orbital_angle(self) -> float: return math.degrees(self.angle) % 360
@@ -53,7 +41,8 @@ class Player(DynamicEntity):
     self.spin_frames = 50
     self.spin_cooldown_frames = 100
 
-    self.active_hb.append(SpinningHBProc(self, (0, 0), (25,25), 100))
+    self.active_hb = []
+    self.spin_hitbox = None
 
     self.current_frame = None
     # load assets [state, animation]
@@ -91,19 +80,26 @@ class Player(DynamicEntity):
   @property
   def current_anim_frame(self): return self.anim.current_frame
   
-  
   def spin_handler(self): 
     self.spinning = True
     if self.spin_frame_count < self.spin_startup_frames: 
       self.set_state(PlayerState.SPIN_STARTUP)
     elif self.spin_startup_frames <= self.spin_frame_count < self.spin_startup_frames + self.spin_frames:
       self.set_state(PlayerState.SPINNING)
-      if pygame.key.get_pressed()[pygame.K_y]: self.spin_frame_count = self.spin_startup_frames
+      if not self.spin_hitbox:
+        self.spin_hitbox = SpinningHBProc(self, (50, 50), self.spin_frames)
+        self.active_hb.append(self.spin_hitbox)
     elif self.spin_startup_frames + self.spin_frames <= self.spin_frame_count < self.spin_startup_frames + self.spin_frames + self.spin_cooldown_frames:
       self.set_state(PlayerState.SPIN_COOLDOWN)
+      if self.spin_hitbox in self.active_hb:
+        self.active_hb.remove(self.spin_hitbox)
+        self.spin_hitbox = None
     else:
       self.spin_frame_count = 0
       self.spinning = False
+      if self.spin_hitbox in self.active_hb:
+        self.active_hb.remove(self.spin_hitbox)
+        self.spin_hitbox = None
 
     self.spin_frame_count += 1
   
@@ -145,6 +141,7 @@ class Player(DynamicEntity):
     self.renderer.image, self.renderer.anim_offset = self.anim.get_img()
     self.update_physics(dt, boundary_dict)
 
+    # update hitboxes on animation schedule
     if self.current_frame != self.anim.current_frame:
       self.current_frame = self.anim.current_frame
       for hb in self.active_hb: hb.update(self.current_frame)
