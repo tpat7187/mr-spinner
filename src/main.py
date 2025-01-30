@@ -30,21 +30,30 @@ class Game:
     self.init_entity_groups()
     self.init_entities()
 
+
     self.mouse_position = None
 
     # init tilemap
-    self.current_map = TileMap(tile_size=32, map_name='dev')
+    self.load_level(TileMap(tile_size=32, map_name='dev'))
     
+
     '''
     GROUP ORDERING
     ENTITIES [Player, All Entities]
     BOUND [Player, All Boundaries from Tile Map] -> Will probably be [Entities, All Boundaries] once we've gotten enemies setup, we dont want them walking into shit
     '''
-    for offgrid_entity in self.current_map.off_grid_assets:
-      self.entities.add(offgrid_entity)
-    
+
+  # get offgrid entities
+  # create boundary dict
+  # we should do the same for static_es in the future
+  def load_level(self, map:TileMap): 
+    self.current_map = map 
     self.boundary_dict = {} 
-    # parse dict to Static Entities at pixel_positions
+    self.static_e_dict = {}
+
+    for offgrid_entity in map.off_grid_assets:
+      self.entities.add(offgrid_entity)
+
     for boundary_tile in self.current_map.get_boundary_tiles(): 
       x_pos = boundary_tile[0] * self.current_map.tile_size - self.camera.scroll[0]
       y_pos = boundary_tile[1] * self.current_map.tile_size - self.camera.scroll[1]
@@ -53,7 +62,6 @@ class Game:
       self.boundaries.add(new_e)
 
       self.boundary_dict[boundary_tile[0], boundary_tile[1]] = new_e
-
 
   def init_entity_groups(self) -> None:
     # player // collidable dynamic/static sprites
@@ -65,6 +73,7 @@ class Game:
     # player // collidable dynamic/static sprites // non collidable dynamic/static sprites
     # idk if we will ever use this
     self.all_sprites = pygame.sprite.Group()
+  
 
   def set_state(self, new_state: GameState) -> None:
     if self.state != new_state:
@@ -73,8 +82,10 @@ class Game:
 
   def init_entities(self) -> None:
     self.player = Player((0, 0), (32, 32))
+    self.box = StaticEntity((25, 25), (30, 30), None)
     self.entities.add(self.player)
-    self.boundaries.add(self.player)
+    self.entities.add(self.box)
+
 
   def handle_events(self) -> None:
     for event in pygame.event.get():

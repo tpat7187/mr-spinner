@@ -30,8 +30,8 @@ class CollisionProc:
     self.entity = entity
   
   def check_collision(self, entity_groups, axis: CollisionAxis):
-    if entity_groups is not None:
-      for sprite in list(entity_groups):
+    for group in entity_groups:
+      for sprite in group:
         if sprite.rect.colliderect(self.entity.rect) and sprite != self.entity:
           self.handle_collision(sprite, axis)
   
@@ -164,9 +164,10 @@ class DynamicEntity(Entity):
 
     self.boundary = ()
   
-  def tile_pos(self, px_pos): 
-    return int(px_pos // (32 * 2))
+  def tile_pos(self, px_pos): return int(px_pos // (32 * 2))
   
+  # TODO: add spatial partitioning for static entities
+  # idk what we're gonna do about dynamic entities like moving mobs ect.
   def update_physics(self, dt: float, boundary_dict):
 
     old_x = self.rect.centerx
@@ -174,14 +175,14 @@ class DynamicEntity(Entity):
     if self.tile_pos(old_x) != self.tile_pos(self.rect.centerx):
       self.boundary =self.get_nearby_tiles_for_CProc(boundary_dict, 2)
 
-    self.phys.check_collision(self.boundary, CollisionAxis.HORIZONTAL)
+    self.phys.check_collision([list(self.boundary), *self.groups()], CollisionAxis.HORIZONTAL)
     
     old_y = self.rect.centery
     self.rect.y += self.velocity.y * dt
     if self.tile_pos(old_y) != self.tile_pos(self.rect.centery):
       self.boundary = self.get_nearby_tiles_for_CProc(boundary_dict, 2)
 
-    self.phys.check_collision(self.boundary, CollisionAxis.VERTICAL)
+    self.phys.check_collision([list(self.boundary), *self.groups()], CollisionAxis.VERTICAL)
 
   # tile area around the player
   # should only be called when the player changes tile position
